@@ -7,3 +7,12 @@ allure generate allure_results -o reporte_allure_html --clean
 ### Código para leer los reportes de allure:
 
 allure open reporte_allure_html
+
+### Imágenes
+
+![image](https://github.com/user-attachments/assets/75c306ea-bf11-40bd-9b96-756cb193ffe3)
+
+![image](https://github.com/user-attachments/assets/fd6c9678-f0c0-459f-8cb5-96502005c4b8)
+
+![image](https://github.com/user-attachments/assets/bddfe637-10b3-408b-be32-95cd1c666716)
+

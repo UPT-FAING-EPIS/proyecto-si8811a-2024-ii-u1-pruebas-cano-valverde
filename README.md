@@ -12,7 +12,7 @@ pip install numpy
 ```
 ### mss (para la captura de pantalla)
 ```python
-pip install numpy
+pip install mss
 ```
 ### Selenium (para la automatización del navegador)
 ```python
@@ -26,10 +26,7 @@ pip install webdriver-manager
 ```python
 pip install behave
 ```
-### Selenium (para la automatización del navegador, ya mencionada en la primera respuesta):
-```python
-pip install selenium
-```
+
 
 ### Código para generar reportes de allure:
 

@@ -43,18 +43,16 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Configurar Python y el entorno virtual
+      # Configurar Python e instalar las dependencias globalmente
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      - name: Create and activate virtual environment
+      - name: Install dependencies globally
         run: |
-          python -m venv venv
-          source venv/bin/activate
-          python -m pip install --upgrade pip
-          pip install -r ./Valverde-Cano-Pruebas/requirements.txt
+          python -m pip install --upgrade pip  # Actualizar pip
+          pip install -r ./Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
           pip install pytest  # Asegurarse de que pytest esté instalado
 
       # Instalar Node.js y dependencias de Testmo CLI
@@ -95,7 +93,6 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source venv/bin/activate
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
@@ -105,6 +102,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
+      # Subir logs de pytest y videos
       - name: Upload pytest logs and videos
         uses: actions/upload-artifact@v3
         with:

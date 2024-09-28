@@ -49,6 +49,7 @@ jobs:
         with:
           python-version: '3.x'
 
+      # Instalar pytest y dependencias desde requirements.txt
       - name: Install dependencies globally
         run: |
           python -m pip install --upgrade pip  # Actualizar pip
@@ -93,6 +94,7 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
+          python -m pip install --upgrade pip  # Asegurarse de que pip está actualizado
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \

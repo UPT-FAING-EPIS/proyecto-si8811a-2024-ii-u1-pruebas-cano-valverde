@@ -37,7 +37,7 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Cambiar a la carpeta correcta y levantar el grid de Selenium
+      # Levantar el grid de Selenium
       - name: Set up Selenium Grid with Docker Compose
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -49,15 +49,17 @@ jobs:
         with:
           python-version: '3.x'
 
+      # Instalar las dependencias necesarias
       - name: Install dependencies globally
         run: |
           python -m pip install --upgrade pip  # Actualizar pip
-          python -m pip install pytest  # Asegurarse de que pytest esté instalado globalmente
+          pip install pytest  # Instalar pytest
+          pip install allure-pytest  # Instalar allure-pytest para los reportes
           pip install -r ./Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
 
       # Verificar instalación de pytest
       - name: Check pytest installation
-        run: pytest --version
+        run: python -m pytest --version
 
       # Instalar Node.js y dependencias para Testmo CLI
       - name: Set up Node.js

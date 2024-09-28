@@ -43,20 +43,19 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Configurar Python e instalar las dependencias globalmente
+      # Instalar Python y dependencias
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.x'
 
-      # Instalar pytest y dependencias desde requirements.txt
       - name: Install dependencies globally
         run: |
           python -m pip install --upgrade pip  # Actualizar pip
           pip install -r ./Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
-          pip install pytest  # Asegurarse de que pytest esté instalado
+          pip install pytest  # Asegurarse de que pytest esté instalado globalmente
 
-      # Instalar Node.js y dependencias de Testmo CLI
+      # Instalar Node.js y dependencias para Testmo CLI
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -83,6 +82,7 @@ jobs:
   test:
     needs: test-setup
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false
       matrix:
@@ -91,10 +91,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # Ejecutar pruebas en paralelo para cada navegador y generar resultados de Allure
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          python -m pip install --upgrade pip  # Asegurarse de que pip está actualizado
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
@@ -115,6 +115,7 @@ jobs:
     needs: [test-setup, test]
     if: always()
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v3
 
@@ -142,5 +143,6 @@ jobs:
   deploy:
     needs: [test-complete]
     runs-on: ubuntu-latest
+
     steps:
       - run: echo "Deploying application .."

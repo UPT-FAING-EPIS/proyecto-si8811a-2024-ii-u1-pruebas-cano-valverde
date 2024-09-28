@@ -37,11 +37,12 @@ jobs:
       # Verificar si la carpeta correcta contiene requirements.txt
       - name: Install dependencies
         run: |
-          if [ -f "proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/Valverde-Cano-Pruebas/requirements.txt" ]; then
-            pip install -r proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/Valverde-Cano-Pruebas/requirements.txt
+          if [ -f "Valverde-Cano-Pruebas/requirements.txt" ]; then
+            pip install -r Valverde-Cano-Pruebas/requirements.txt
           else
             echo "No se encontró el archivo requirements.txt"
             exit 1
+          fi
 
       - uses: docker/login-action@v2
         with:

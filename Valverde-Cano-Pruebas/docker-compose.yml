@@ -1,7 +1,6 @@
-version: "3"
 services:
   selenium-hub:
-    image: selenium/hub:4.25.0-20240922
+    image: greenvalve/selenium_testmo:selenium-hub
     container_name: selenium-hub
     ports:
       - "4442:4442"
@@ -11,7 +10,7 @@ services:
       - selenium-grid
 
   chrome:
-    image: selenium/node-chrome:4.25.0-20240922
+    image: greenvalve/selenium_testmo:node-chrome
     container_name: chrome
     shm_size: 2gb
     depends_on:
@@ -24,7 +23,7 @@ services:
       - selenium-grid
 
   firefox:
-    image: selenium/node-firefox:4.25.0-20240922
+    image: greenvalve/selenium_testmo:node-firefox
     container_name: firefox
     shm_size: 2gb
     depends_on:
@@ -37,7 +36,7 @@ services:
       - selenium-grid
 
   edge:
-    image: selenium/node-edge:4.25.0-20240922
+    image: greenvalve/selenium_testmo:node-edge
     container_name: edge
     shm_size: 2gb
     depends_on:
@@ -50,7 +49,7 @@ services:
       - selenium-grid
 
   chrome_video:
-    image: selenium/video:ffmpeg-7.0.2-20240922
+    image: greenvalve/selenium_testmo:video-node-chrome
     container_name: chrome_video
     volumes:
       - ./videos:/videos
@@ -65,7 +64,7 @@ services:
       - selenium-grid
 
   edge_video:
-    image: selenium/video:ffmpeg-7.0.2-20240922
+    image: greenvalve/selenium_testmo:video-node-edge
     container_name: edge_video
     volumes:
       - ./videos:/videos
@@ -80,7 +79,7 @@ services:
       - selenium-grid
 
   firefox_video:
-    image: selenium/video:ffmpeg-7.0.2-20240922
+    image: greenvalve/selenium_testmo:video-node-firefox
     container_name: firefox_video
     volumes:
       - ./videos:/videos

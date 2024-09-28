@@ -50,11 +50,12 @@ jobs:
         with:
           node-version: '16'
 
-      - name: Install Testmo CLI
+      # Instalar Testmo CLI localmente en el proyecto
+      - name: Install Testmo CLI locally
         run: |
-          npm install -g testmo-cli
+          npm install testmo-cli --save-dev
 
-      # Crear un test run en Testmo
+      # Crear un test run en Testmo usando la instalación local del CLI
       - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
@@ -82,7 +83,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Run the tests in parallel for each browser and generate Allure results
+      # Ejecutar las pruebas en paralelo para cada navegador y generar resultados
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -90,12 +91,12 @@ jobs:
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results results/*.xml
+            --results allure-results/*.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Upload pytest logs and videos
+      # Subir los logs y videos como artefactos
       - name: Upload pytest logs and videos
         uses: actions/upload-artifact@v3
         with:
@@ -111,7 +112,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Mark the test run as completed in Testmo
+      # Marcar el test run como completado en Testmo
       - run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \
@@ -120,7 +121,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Generate Allure report and upload as artifact
+      # Generar el reporte de Allure y subirlo como artefacto
       - name: Generate Allure Report
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -132,7 +133,7 @@ jobs:
           name: allure-report
           path: ./Valverde-Cano-Pruebas/allure-report
 
-  # Job para el despliegue
+  # Job para el despliegue (opcional)
   deploy:
     needs: [test-complete]
     runs-on: ubuntu-latest

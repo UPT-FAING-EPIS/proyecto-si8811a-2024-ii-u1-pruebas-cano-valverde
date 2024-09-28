@@ -44,6 +44,11 @@ jobs:
             exit 1
           fi
 
+      # Actualizar urllib3 para evitar el error de compatibilidad
+      - name: Upgrade urllib3
+        run: |
+          pip install --upgrade urllib3
+
       # Instalar Docker Compose
       - name: Install Docker Compose
         run: |

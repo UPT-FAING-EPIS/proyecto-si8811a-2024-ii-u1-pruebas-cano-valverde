@@ -49,8 +49,8 @@ jobs:
           python-version: '3.x'
 
       # Crear y activar el entorno virtual, luego guardar PATH
-      - name: Activate virtualenv
-        working-directory: ./Valverde-Cano-Pruebas
+      - name: Create and activate virtualenv
+        working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
           python3 -m venv venv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
           source venv/bin/activate  # Activar el entorno virtual
@@ -99,7 +99,7 @@ jobs:
 
       # Ejecutar pruebas en paralelo para cada navegador
       - name: Run Selenium tests
-        working-directory: ./Valverde-Cano-Pruebas
+        working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
           source venv/bin/activate  # Activar entorno virtual
           python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecución directa del comando con el entorno activado

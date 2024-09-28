@@ -38,12 +38,13 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      # Setup Docker Compose (Selenium Grid)
+      # Cambiar a la carpeta correcta y levantar el grid de Selenium
       - name: Set up Selenium Grid with Docker Compose
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           docker-compose up -d
       
-      # Create a test run in Testmo
+      # Crear un test run en Testmo
       - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
@@ -73,6 +74,7 @@ jobs:
 
       # Run the tests in parallel for each browser and generate Allure results
       - name: Run Selenium tests
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx testmo automation:run:submit-thread \
@@ -88,7 +90,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: pytest-logs-and-videos
-          path: ./videos
+          path: ./Valverde-Cano-Pruebas/videos
 
   # Job para completar las pruebas
   test-complete:
@@ -110,6 +112,7 @@ jobs:
 
       # Generate Allure report and upload as artifact
       - name: Generate Allure Report
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
 
@@ -117,7 +120,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: allure-report
-          path: ./allure-report
+          path: ./Valverde-Cano-Pruebas/allure-report
 
   # Job para el despliegue
   deploy:

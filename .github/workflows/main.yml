@@ -56,11 +56,11 @@ jobs:
           npm install -g @testmo/testmo-cli
           npm list -g @testmo/testmo-cli  # Verificar que se instaló correctamente
 
-      # Crear un test run en Testmo sin el uso de resources.json
+      # Crear un test run en Testmo
       - run: |
           npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
-            --project-id 1 \
+            --project-id 1 \  # Cambia "1" si el ID del proyecto es diferente
             --name "Parallel Selenium Test Run" \
             --source "selenium-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)

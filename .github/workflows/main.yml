@@ -43,7 +43,17 @@ jobs:
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           docker-compose up -d
-      
+
+      # Instalar Node.js y las dependencias necesarias
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+
+      - name: Install Testmo CLI
+        run: |
+          npm install -g testmo-cli
+
       # Crear un test run en Testmo
       - run: |
           npx testmo automation:run:create \

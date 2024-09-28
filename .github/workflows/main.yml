@@ -52,8 +52,12 @@ jobs:
       - name: Install dependencies globally
         run: |
           python -m pip install --upgrade pip  # Actualizar pip
+          python -m pip install pytest  # Asegurarse de que pytest esté instalado globalmente
           pip install -r ./Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
-          pip install pytest  # Asegurarse de que pytest esté instalado globalmente
+
+      # Verificar instalación de pytest
+      - name: Check pytest installation
+        run: pytest --version
 
       # Instalar Node.js y dependencias para Testmo CLI
       - name: Set up Node.js
@@ -95,7 +99,7 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
+          python -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \

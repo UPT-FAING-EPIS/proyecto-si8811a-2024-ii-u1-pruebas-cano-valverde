@@ -4,13 +4,15 @@ on:
   push:
     branches:
       - main
+      - feature/feature_pruebas
   pull_request:
     branches:
       - main
+      - feature/feature_pruebas
   workflow_dispatch:
 
 jobs:
-  # Job para construir el proyecto (si aplica)
+  # Job para construir el proyecto
   build:
     runs-on: ubuntu-latest
     steps:
@@ -22,16 +24,24 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
-      
+
     steps:
       - uses: actions/checkout@v3
 
-      # Instalar Docker Compose
-      - name: Install Docker Compose
+      # Crear el entorno virtual
+      - name: Set up Python environment
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+          python -m venv venv
+          source venv/bin/activate
+
+      # Verificar si la carpeta correcta contiene requirements.txt
+      - name: Install dependencies
+        run: |
+          if [ -f "proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/Valverde-Cano-Pruebas/requirements.txt" ]; then
+            pip install -r proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/Valverde-Cano-Pruebas/requirements.txt
+          else
+            echo "No se encontró el archivo requirements.txt"
+            exit 1
 
       - uses: docker/login-action@v2
         with:
@@ -44,21 +54,7 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Python y dependencias desde el archivo requirements.txt
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies from requirements.txt
-        run: |
-          python -m venv venv  # Crear un entorno virtual
-          source venv/bin/activate  # Activar el entorno virtual
-          python -m pip install --upgrade pip  # Actualizar pip
-          pip install -r proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
-          pip install pytest  # Asegurarse de que pytest esté instalado
-
-      # Instalar Node.js y las dependencias necesarias para Testmo
+      # Instalar Node.js y las dependencias necesarias
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -95,21 +91,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Ejecutar pruebas en paralelo para cada navegador y generar resultados de Allure
+      # Run the tests in parallel for each browser and generate Allure results
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source venv/bin/activate  # Activar el entorno virtual
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results allure-results/*.xml
+            --results results/*.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Subir logs de pytest y videos
+      # Upload pytest logs and videos
       - name: Upload pytest logs and videos
         uses: actions/upload-artifact@v3
         with:
@@ -125,7 +120,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Marcar el test run como completo en Testmo
+      # Marcar el test run como completado en Testmo
       - run: |
           npx @testmo/testmo-cli automation:run:complete \
             --instance "$TESTMO_URL" \
@@ -134,7 +129,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Generar reporte de Allure y subirlo como artefacto
+      # Generar el reporte de Allure y subirlo como artefacto
       - name: Generate Allure Report
         working-directory: ./Valverde-Cano-Pruebas
         run: |

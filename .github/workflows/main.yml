@@ -26,13 +26,20 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      # Crear el entorno virtual
+      - name: Set up Python environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r ./Valverde-Cano-Pruebas/requirements.txt
       # Instalar Docker Compose
       - name: Install Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
           docker-compose --version
-
+          
       - uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
@@ -43,21 +50,7 @@ jobs:
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           docker-compose up -d
-
-      # Instalar Python y dependencias desde el archivo requirements.txt
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies from requirements.txt
-        working-directory: ./Valverde-Cano-Pruebas
-        run: |
-          source myenv/bin/activate  # Activar el entorno virtual
-          python -m pip install --upgrade pip  # Actualizar pip
-          pip install -r ./requirements.txt  # Instalar dependencias desde el requirements.txt
-          pip install pytest  # Asegurarse de que pytest esté instalado
-
+          
       # Instalar Node.js y las dependencias necesarias para Testmo
       - name: Set up Node.js
         uses: actions/setup-node@v3
@@ -67,7 +60,7 @@ jobs:
       - name: Install Testmo CLI
         run: |
           npm install -g @testmo/testmo-cli
-
+          
       # Crear un test run en Testmo
       - run: |
           npx @testmo/testmo-cli automation:run:create \
@@ -81,7 +74,6 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         id: run-tests
-
   # Job para ejecutar las pruebas en paralelo
   test:
     needs: test-setup
@@ -133,12 +125,13 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-
+          
       # Generar reporte de Allure y subirlo como artefacto
       - name: Generate Allure Report
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
+          
       - name: Upload Allure Report
         uses: actions/upload-artifact@v3
         with:

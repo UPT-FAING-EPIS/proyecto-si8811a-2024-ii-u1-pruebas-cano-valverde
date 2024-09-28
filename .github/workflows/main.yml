@@ -48,14 +48,15 @@ jobs:
           python-version: '3.x'
 
       # Crear entorno virtual dentro de Valverde-Cano-Pruebas y activar
-      - name: Create and activate virtual environment
+      - name: Create virtual environment and install dependencies
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           python3 -m venv myenv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
+          ls -la myenv  # Verificar que el entorno virtual fue creado
           source myenv/bin/activate  # Activar el entorno virtual
           python3 -m pip install --upgrade pip  # Actualizar pip
-          pip3 install pytest  # Asegurarse de que pytest esté instalado
-          pip3 install -r ./requirements.txt  # Instalar dependencias del requirements.txt sin --user
+          pip install pytest  # Instalar pytest
+          pip install -r ./requirements.txt  # Instalar dependencias del requirements.txt
 
       # Instalar Node.js y las dependencias necesarias para Testmo
       - name: Set up Node.js

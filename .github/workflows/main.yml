@@ -51,11 +51,12 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies from requirements.txt
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           python -m venv venv  # Crear un entorno virtual
           source venv/bin/activate  # Activar el entorno virtual
           python -m pip install --upgrade pip  # Actualizar pip
-          pip install -r ./Valverde-Cano-Pruebas/requirements.txt  # Instalar dependencias desde el requirements.txt
+          pip install -r ./requirements.txt  # Instalar dependencias desde el requirements.txt
           pip install pytest  # Asegurarse de que pytest esté instalado
 
       # Instalar Node.js y las dependencias necesarias para Testmo
@@ -139,7 +140,6 @@ jobs:
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-
       - name: Upload Allure Report
         uses: actions/upload-artifact@v3
         with:

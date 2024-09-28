@@ -60,8 +60,8 @@ jobs:
       - run: |
           npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
-            --project-id 1 \  # Cambia "1" si el ID del proyecto es diferente
-            --name "Parallel Selenium Test Run" \
+            --project-id Selenium Test Automation \  # Cambia "1" si el ID del proyecto es diferente
+            --name "Parallel Selenium Test Run" \  # Fíjate en que --name esté especificado
             --source "selenium-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT

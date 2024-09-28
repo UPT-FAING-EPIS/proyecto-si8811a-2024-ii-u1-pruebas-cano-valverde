@@ -101,6 +101,7 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
+          source venv/bin/activate  # Activar entorno virtual
           python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecución directa del comando con el entorno activado
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \

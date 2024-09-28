@@ -48,14 +48,17 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Create and activate virtual environment
-        working-directory: ./Valverde-Cano-Pruebas  # Cambiamos a la carpeta correcta
+      # Crear y activar el entorno virtual, luego guardar PATH
+      - name: Activate virtualenv
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           python3 -m venv venv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
           source venv/bin/activate  # Activar el entorno virtual
+          echo "Activating virtualenv"
           python3 -m pip install --upgrade pip  # Actualizar pip
           pip install -r requirements.txt  # Instalar dependencias del requirements.txt
-          pip install pytest
+          pip install pytest  # Instalar pytest
+          echo "PATH=$PATH" >> $GITHUB_ENV  # Guardar PATH en $GITHUB_ENV para que persista
         shell: bash
 
       # Instalar Node.js y Testmo CLI
@@ -96,10 +99,9 @@ jobs:
 
       # Ejecutar pruebas en paralelo para cada navegador
       - name: Run Selenium tests
-        working-directory: ./Valverde-Cano-Pruebas  # Cambiamos a la carpeta correcta
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source venv/bin/activate  # Activar el entorno virtual
-          python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
+          python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecución directa del comando con el entorno activado
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
@@ -135,7 +137,7 @@ jobs:
 
       # Generar reporte de Allure y subirlo como artefacto
       - name: Generate Allure Report
-        working-directory: ./Valverde-Cano-Pruebas  # Cambiamos a la carpeta correcta
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
 

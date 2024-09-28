@@ -12,19 +12,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Job para construir el proyecto
   build:
     runs-on: ubuntu-latest
     steps:
       - run: echo "Building the project .."
 
-  # Job para configurar las pruebas
   test-setup:
     needs: build
     runs-on: ubuntu-latest
     outputs:
       testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
-
     steps:
       - uses: actions/checkout@v3
 
@@ -46,15 +43,21 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Activar entorno virtual existente y actualizar pip
-      - name: Activate and set up existing virtual environment
-        working-directory: ./Valverde-Cano-Pruebas
-        run: |
-          source myenv/bin/activate  # Activar el entorno virtual existente
-          python -m pip install --upgrade pip  # Actualizar pip
-          pip install -r requirements.txt  # Instalar dependencias desde el archivo requirements.txt
+      # Configurar Python y el entorno virtual
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-      # Instalar Node.js y las dependencias necesarias para Testmo
+      - name: Create and activate virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip
+          pip install -r ./Valverde-Cano-Pruebas/requirements.txt
+          pip install pytest  # Asegurarse de que pytest esté instalado
+
+      # Instalar Node.js y dependencias de Testmo CLI
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
@@ -78,11 +81,9 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
         id: run-tests
 
-  # Job para ejecutar las pruebas en paralelo
   test:
     needs: test-setup
     runs-on: ubuntu-latest
-
     strategy:
       fail-fast: false
       matrix:
@@ -91,11 +92,10 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Ejecutar pruebas en paralelo para cada navegador y generar resultados de Allure
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source myenv/bin/activate  # Activar el entorno virtual
+          source venv/bin/activate
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
@@ -105,23 +105,20 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Subir logs de pytest y videos
       - name: Upload pytest logs and videos
         uses: actions/upload-artifact@v3
         with:
           name: pytest-logs-and-videos
           path: ./Valverde-Cano-Pruebas/videos
 
-  # Job para completar las pruebas
   test-complete:
     needs: [test-setup, test]
     if: always()
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
-      # Marcar el test run como completo en Testmo
+      # Completar el test run en Testmo
       - run: |
           npx @testmo/testmo-cli automation:run:complete \
             --instance "$TESTMO_URL" \
@@ -130,7 +127,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Generar reporte de Allure y subirlo como artefacto
+      # Generar reporte de Allure
       - name: Generate Allure Report
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -142,10 +139,8 @@ jobs:
           name: allure-report
           path: ./Valverde-Cano-Pruebas/allure-report
 
-  # Job para el despliegue
   deploy:
     needs: [test-complete]
     runs-on: ubuntu-latest
-
     steps:
       - run: echo "Deploying application .."

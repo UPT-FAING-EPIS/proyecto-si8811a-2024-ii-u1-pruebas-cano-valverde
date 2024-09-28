@@ -46,14 +46,13 @@ jobs:
     services:
       selenium-hub:
         image: greenvalve/selenium_testmo:selenium-hub
+        options: --shm-size=2gb
         ports:
           - 4444:4444
 
       chrome:
         image: greenvalve/selenium_testmo:node-chrome
-        depends_on:
-          - selenium-hub
-        shm_size: 2gb
+        options: --shm-size=2gb
         environment:
           SE_EVENT_BUS_HOST: selenium-hub
           SE_EVENT_BUS_PUBLISH_PORT: 4442
@@ -61,9 +60,7 @@ jobs:
 
       firefox:
         image: greenvalve/selenium_testmo:node-firefox
-        depends_on:
-          - selenium-hub
-        shm_size: 2gb
+        options: --shm-size=2gb
         environment:
           SE_EVENT_BUS_HOST: selenium-hub
           SE_EVENT_BUS_PUBLISH_PORT: 4442
@@ -71,9 +68,7 @@ jobs:
 
       edge:
         image: greenvalve/selenium_testmo:node-edge
-        depends_on:
-          - selenium-hub
-        shm_size: 2gb
+        options: --shm-size=2gb
         environment:
           SE_EVENT_BUS_HOST: selenium-hub
           SE_EVENT_BUS_PUBLISH_PORT: 4442
@@ -83,8 +78,6 @@ jobs:
         image: greenvalve/selenium_testmo:video-node-chrome
         volumes:
           - ./videos:/videos
-        depends_on:
-          - chrome
         environment:
           DISPLAY_CONTAINER_NAME: chrome
           SE_NODE_GRID_URL: http://selenium-hub:4444

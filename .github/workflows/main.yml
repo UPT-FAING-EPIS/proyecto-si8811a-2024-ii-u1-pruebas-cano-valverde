@@ -53,8 +53,7 @@ jobs:
       - name: Install dependencies from requirements.txt
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          python -m venv venv  # Crear un entorno virtual
-          source venv/bin/activate  # Activar el entorno virtual
+          source myenv/bin/activate  # Activar el entorno virtual
           python -m pip install --upgrade pip  # Actualizar pip
           pip install -r ./requirements.txt  # Instalar dependencias desde el requirements.txt
           pip install pytest  # Asegurarse de que pytest esté instalado

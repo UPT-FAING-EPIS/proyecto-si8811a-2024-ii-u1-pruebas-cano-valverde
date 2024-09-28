@@ -50,11 +50,9 @@ jobs:
         with:
           node-version: '16'
 
-      # Instalar Testmo CLI globalmente desde npm
-      - name: Install Testmo CLI globally
+      - name: Install Testmo CLI
         run: |
           npm install -g @testmo/testmo-cli
-          npm list -g @testmo/testmo-cli  # Verificar que se instaló correctamente
 
       # Crear un test run en Testmo
       - run: |
@@ -65,7 +63,6 @@ jobs:
             --source "selenium-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
-        working-directory: ./Valverde-Cano-Pruebas
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
@@ -84,7 +81,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Ejecutar las pruebas en paralelo para cada navegador y generar resultados
+      # Run the tests in parallel for each browser and generate Allure results
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -97,7 +94,7 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Subir los logs y videos como artefactos
+      # Upload pytest logs and videos
       - name: Upload pytest logs and videos
         uses: actions/upload-artifact@v3
         with:
@@ -113,17 +110,16 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      # Marcar el test run como completado en Testmo
+      # Mark the test run as completed in Testmo
       - run: |
           npx @testmo/testmo-cli automation:run:complete \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
-        working-directory: ./Valverde-Cano-Pruebas
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Generar el reporte de Allure y subirlo como artefacto
+      # Generate Allure report and upload as artifact
       - name: Generate Allure Report
         working-directory: ./Valverde-Cano-Pruebas
         run: |
@@ -135,7 +131,7 @@ jobs:
           name: allure-report
           path: ./Valverde-Cano-Pruebas/allure-report
 
-  # Job para el despliegue (opcional)
+  # Job para el despliegue
   deploy:
     needs: [test-complete]
     runs-on: ubuntu-latest

@@ -60,7 +60,7 @@ jobs:
       - run: |
           npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
-            --project-id 1 \  # Cambia "1" si el ID del proyecto es diferente
+            --project-id 1 \
             --name "Parallel Selenium Test Run" \
             --source "selenium-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)

@@ -44,19 +44,19 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Node.js y dependencias necesarias
+      # Instalar Node.js y las dependencias necesarias
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
 
-      # Instalar Testmo CLI localmente en el proyecto
-      - name: Install Testmo CLI locally
+      # Instalar Testmo CLI globalmente
+      - name: Install Testmo CLI globally
         run: |
-          npm install testmo-cli --save-dev
-          npm list testmo-cli  # Verificar que esté instalado
+          npm install -g testmo-cli
+          npm list -g testmo-cli  # Verificar que se instaló correctamente
 
-      # Crear un test run en Testmo usando la instalación local del CLI
+      # Crear un test run en Testmo usando la instalación global del CLI
       - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \

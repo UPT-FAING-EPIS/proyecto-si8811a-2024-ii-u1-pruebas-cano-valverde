@@ -49,19 +49,21 @@ jobs:
         with:
           python-version: '3.x'
 
-      # Crear entorno virtual y activar
+      # Crear entorno virtual dentro de Valverde-Cano-Pruebas y activar
       - name: Create and activate virtual environment
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
-          python -m venv myenv
-          source myenv/bin/activate
-          pip install --upgrade pip
-          pip install pytest allure-pytest
-          pip install -r ./Valverde-Cano-Pruebas/requirements.txt
+          python3 -m venv myenv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
+          source myenv/bin/activate  # Activar el entorno virtual
+          python3 -m pip install --upgrade pip  # Actualizar pip
+          pip3 install pytest --user  # Asegurarse de que pytest esté instalado a nivel de usuario
+          pip3 install -r ./requirements.txt --user  # Instalar dependencias del requirements.txt
+
       # Verificar instalación de pytest
       - name: Check pytest installation
         run: |
-          source myenv/bin/activate
-          python -m pytest --version
+          source ./Valverde-Cano-Pruebas/myenv/bin/activate
+          python3 -m pytest --version
 
       # Instalar Node.js y dependencias para Testmo CLI
       - name: Set up Node.js
@@ -103,8 +105,8 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source myenv/bin/activate
-          python -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
+          source myenv/bin/activate  # Activar el entorno virtual
+          python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \

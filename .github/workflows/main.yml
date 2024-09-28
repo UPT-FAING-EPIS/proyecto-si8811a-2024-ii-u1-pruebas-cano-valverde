@@ -46,20 +46,13 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Python y dependencias desde el archivo requirements.txt
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.x'
-
-      - name: Install dependencies from requirements.txt
+      # Activar entorno virtual existente y actualizar pip
+      - name: Activate and set up existing virtual environment
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          python -m venv venv  # Crear el entorno virtual en la carpeta
-          source venv/bin/activate  # Activar el entorno virtual
+          source myenv/bin/activate  # Activar el entorno virtual existente
           python -m pip install --upgrade pip  # Actualizar pip
-          pip install -r requirements.txt  # Instalar dependencias desde el requirements.txt
-          pip install pytest  # Asegurarse de que pytest esté instalado
+          pip install -r requirements.txt  # Instalar dependencias desde el archivo requirements.txt
 
       # Instalar Node.js y las dependencias necesarias para Testmo
       - name: Set up Node.js
@@ -102,7 +95,7 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source venv/bin/activate  # Activar el entorno virtual
+          source myenv/bin/activate  # Activar el entorno virtual
           pytest --browser=${{ matrix.browser }} --alluredir=./allure-results
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \

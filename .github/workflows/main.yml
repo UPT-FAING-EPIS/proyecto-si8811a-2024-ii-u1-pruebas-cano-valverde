@@ -1,0 +1,186 @@
+name: Build, Test with Selenium Grid, and Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Build and Push Docker Images to Docker Hub
+      - name: Build and Push Docker Images
+        run: |
+          docker build -t greenvalve/selenium_testmo:selenium-hub .
+          docker build -t greenvalve/selenium_testmo:node-chrome .
+          docker build -t greenvalve/selenium_testmo:node-firefox .
+          docker build -t greenvalve/selenium_testmo:node-edge .
+          docker build -t greenvalve/selenium_testmo:video-node-chrome .
+          docker build -t greenvalve/selenium_testmo:video-node-firefox .
+          docker build -t greenvalve/selenium_testmo:video-node-edge .
+          docker push greenvalve/selenium_testmo:selenium-hub
+          docker push greenvalve/selenium_testmo:node-chrome
+          docker push greenvalve/selenium_testmo:node-firefox
+          docker push greenvalve/selenium_testmo:node-edge
+          docker push greenvalve/selenium_testmo:video-node-chrome
+          docker push greenvalve/selenium_testmo:video-node-firefox
+          docker push greenvalve/selenium_testmo:video-node-edge
+
+  test-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    services:
+      selenium-hub:
+        image: greenvalve/selenium_testmo:selenium-hub
+        ports:
+          - 4444:4444
+
+      chrome:
+        image: greenvalve/selenium_testmo:node-chrome
+        depends_on:
+          - selenium-hub
+        shm_size: 2gb
+        environment:
+          SE_EVENT_BUS_HOST: selenium-hub
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+      firefox:
+        image: greenvalve/selenium_testmo:node-firefox
+        depends_on:
+          - selenium-hub
+        shm_size: 2gb
+        environment:
+          SE_EVENT_BUS_HOST: selenium-hub
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+      edge:
+        image: greenvalve/selenium_testmo:node-edge
+        depends_on:
+          - selenium-hub
+        shm_size: 2gb
+        environment:
+          SE_EVENT_BUS_HOST: selenium-hub
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+      chrome_video:
+        image: greenvalve/selenium_testmo:video-node-chrome
+        volumes:
+          - ./videos:/videos
+        depends_on:
+          - chrome
+        environment:
+          DISPLAY_CONTAINER_NAME: chrome
+          SE_NODE_GRID_URL: http://selenium-hub:4444
+          SE_VIDEO_FILE_NAME: auto
+          FFmpeg_Options: "-framerate 2 -video_size 1920x1080 -probesize 5000000 -analyzeduration 1000000"
+
+    outputs:
+      testmo-run-id: ${{ steps.create-test-run.outputs.testmo-run-id }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      # Install dependencies
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install allure-pytest
+
+      # Create Testmo Test Run
+      - name: Create Testmo Test Run
+        id: create-test-run
+        run: |
+          npx testmo automation:run:create \
+            --instance "$TESTMO_URL" \
+            --project-id 1 \
+            --name "Selenium Parallel Test Run" \
+            --resources resources.json \
+            --source "selenium-tests" > testmo-run-id.txt
+          echo "testmo-run-id=$(cat testmo-run-id.txt)" >> $GITHUB_OUTPUT
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
+  test:
+    needs: test-setup
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+
+      # Install dependencies
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install allure-pytest
+
+      # Run tests with Pytest and Allure
+      - name: Run tests with Pytest
+        run: |
+          pytest --browser ${{ matrix.browser }} --alluredir=./allure-results/${{ matrix.browser }} --log-file=pytest_${{ matrix.browser }}.log
+
+      # Upload Allure results
+      - name: Upload Allure results
+        uses: actions/upload-artifact@v2
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: ./allure-results/${{ matrix.browser }}
+
+      # Upload logs
+      - name: Upload Pytest logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: pytest-logs-${{ matrix.browser }}
+          path: pytest_${{ matrix.browser }}.log
+
+  test-complete:
+    needs: [test, test-setup]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Complete Testmo Run
+        run: |
+          npx testmo automation:run:complete \
+            --instance "$TESTMO_URL" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
+  deploy:
+    needs: test-complete
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "Deploying..."

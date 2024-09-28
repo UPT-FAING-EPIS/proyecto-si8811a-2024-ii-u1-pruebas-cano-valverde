@@ -44,7 +44,18 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Node.js y las dependencias necesarias
+      # Instalar Python y pytest
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest selenium allure-pytest
+
+      # Instalar Node.js y las dependencias necesarias para Testmo
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:

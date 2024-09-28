@@ -50,22 +50,22 @@ jobs:
         with:
           node-version: '16'
 
-      # Instalar Testmo CLI globalmente desde npm usando el nombre completo del paquete
+      # Instalar Testmo CLI globalmente desde npm
       - name: Install Testmo CLI globally
         run: |
           npm install -g @testmo/testmo-cli
           npm list -g @testmo/testmo-cli  # Verificar que se instaló correctamente
 
-      # Crear un test run en Testmo usando la instalación global del CLI
+      # Crear un test run en Testmo sin el uso de resources.json
       - run: |
           npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
             --name "Parallel Selenium Test Run" \
-            --resources resources.json \
             --source "selenium-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
+        working-directory: ./Valverde-Cano-Pruebas
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
@@ -118,6 +118,7 @@ jobs:
           npx @testmo/testmo-cli automation:run:complete \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
+        working-directory: ./Valverde-Cano-Pruebas
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}

@@ -88,6 +88,13 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
+      # Upload npm logs for debugging
+      - name: Upload npm logs
+        uses: actions/upload-artifact@v2
+        with:
+          name: npm-debug-log
+          path: /home/runner/.npm/_logs/2024-09-29T08_12_08_562Z-debug-0.log
+
   test-complete:
     needs: [test-setup, test]
     if: always()

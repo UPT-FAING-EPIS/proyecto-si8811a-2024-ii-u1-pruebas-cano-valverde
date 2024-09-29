@@ -1,99 +1,123 @@
-name: CI Selenium Grid Tests
+# .github/workflows/build.yml
+name: Build and Test with Selenium Grid
 
-on:
-  push:
-    branches:
-      - main
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - run: echo "Building .."
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+  test-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.12
-
-      - name: Set up virtual environment
-        run: |
+      - run: |
           python3 -m venv venv
           source ./venv/bin/activate
           python3 -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Start Selenium Grid
-        run: |
+      # Optionally add a couple of fields such as the git hash and link to the build
+      - run: |
+          npx testmo automation:resources:add-field --name git --type string \
+            --value ${GITHUB_SHA:0:7} --resources resources.json
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          npx testmo automation:resources:add-link --name build \
+            --url $RUN_URL --resources resources.json
+
+      # Create test run in Testmo
+      - run: |
+          npx testmo automation:run:create \
+            --instance "$TESTMO_URL" \
+            --project-id 1 \
+            --name "Selenium Grid Test Run" \
+            --resources resources.json \
+            --source "selenium-tests" > testmo-run-id.txt
+          ID=$(cat testmo-run-id.txt)
+          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        id: run-tests
+
+  test:
+    needs: test-setup
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_index: [0, 1]  # Divide en 2 hilos para pruebas paralelas
+        ci_total: [2]
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - run: |
+          source ./venv/bin/activate
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Start Selenium Grid
+      - run: |
           docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0  # Versión de Selenium Hub
           docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0  # Nodo de Chrome
           docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0  # Nodo de Firefox
           docker ps -a  # Verificación de contenedores Docker
 
-      - name: Crear y guardar el Run ID en Testmo
-        run: |
-          RUN_ID=$(npx @testmo/testmo-cli automation:run:create \
-            --instance "$TESTMO_URL" \
-            --project-id 1 \  # Cambia el ID del proyecto si es necesario
-            --title "Selenium Grid Test Run" \
-            --description "Ejecución de prueba con Selenium Grid" \
-            --suite-id 1)  # Cambia el ID del suite si es necesario
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV  # Guardar el RUN_ID en las variables de entorno
-        shell: /usr/bin/bash -e {0}
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-
-      - name: Run Selenium tests on Grid
-        run: |
+      # Run Selenium tests and report results to Testmo
+      - run: |
           source ./venv/bin/activate
-          python3 -m pytest --browser=chrome --alluredir=./allure-results  # Ejecutar pytest con Selenium Grid
-        env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub  # URL del Selenium Grid Hub
-        shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
-
-      - name: Generar y subir reporte de Allure
-        working-directory: ./Valverde-Cano-Pruebas
-        run: |
-          allure generate ./allure-results --clean -o ./allure-report
-        - uses: actions/upload-artifact@v3
-          with:
-            name: allure-report
-            path: ./allure-report
-
-      - name: Subir resultados a Testmo
-        run: |
-          npx @testmo/testmo-cli automation:run:submit-thread \
+          python3 -m pytest --browser=chrome --alluredir=./allure-results
+          npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
-            --run-id "$RUN_ID" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
             --results allure-results/*.xml
-        shell: /usr/bin/bash -e {0}
         env:
+          CI_TOTAL: ${{ matrix.ci_total }}
+          CI_INDEX: ${{ matrix.ci_index }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-          RUN_ID: ${{ env.RUN_ID }}
 
-      - name: Completar y marcar ejecución de prueba en Testmo
-        run: |
-          npx @testmo/testmo-cli automation:run:complete \
+  test-complete:
+    needs: [test-setup, test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+      - run: |
+          source ./venv/bin/activate
+          python3 -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      # Mark test run completed in Testmo
+      - run: |
+          npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \
-            --run-id "$RUN_ID"
-        shell: /usr/bin/bash -e {0}
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-          RUN_ID: ${{ env.RUN_ID }}
 
-      - name: Clean up and stop Selenium Grid
-        run: |
-          docker stop selenium-hub
-          docker rm selenium-hub
-          docker stop $(docker ps -q --filter ancestor=selenium/node-chrome)
-          docker stop $(docker ps -q --filter ancestor=selenium/node-firefox)
-          docker rm $(docker ps -q --filter ancestor=selenium/node-chrome)
-          docker rm $(docker ps -q --filter ancestor=selenium/node-firefox)
-          rm -rf ./allure-results
-          rm -rf ./allure-report
-          deactivate
+  deploy:
+    needs: [test, test-complete]
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: echo "Deploying .."

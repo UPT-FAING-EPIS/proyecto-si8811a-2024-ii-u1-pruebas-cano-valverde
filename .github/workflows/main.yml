@@ -19,7 +19,7 @@ jobs:
           node-version: 19
           cache: 'npm'
 
-      # Install dependencies based on package.json
+      # Install dependencies based on package-lock.json
       - run: npm ci
 
       - run: echo "Building complete"

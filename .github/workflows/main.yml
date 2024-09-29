@@ -42,7 +42,7 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Python y crear el entorno virtual con la versión 3.12 de Python
+      # Instalar Python y crear el entorno virtual
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
@@ -52,6 +52,7 @@ jobs:
       - name: Create and activate virtualenv
         working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
+          mkdir env || echo "Env directory already exists"  # Intentar crear la carpeta env, ignorar el error si ya existe
           python3 -m venv venv  # Crear entorno virtual
           ls -la  # Verificar que la carpeta venv fue creada
           source ./venv/bin/activate  # Activar el entorno virtual usando la ruta completa
@@ -98,6 +99,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+
+      # Verificar la existencia del entorno virtual antes de intentar activarlo
+      - name: Verify virtualenv exists
+        working-directory: ./Valverde-Cano-Pruebas
+        run: |
+          ls -la ./venv/bin  # Verificar si la carpeta ./venv/bin existe
 
       # Ejecutar pruebas en paralelo para cada navegador
       - name: Run Selenium tests

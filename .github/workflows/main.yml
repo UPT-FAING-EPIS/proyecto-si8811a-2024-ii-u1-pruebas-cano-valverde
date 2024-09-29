@@ -1,4 +1,4 @@
-name: Build
+name: Build and Test with Testmo
 
 on: [push, workflow_dispatch]
 
@@ -8,15 +8,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 19
-          
-      - name: Install dependencies
-        working-directory: ./Valverde-Cano-Pruebas
-        run: npm install
+      - run: echo "Building.."
 
   test-setup:
     needs: build
@@ -26,27 +18,24 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 19
-          
+          cache: npm
       - name: Install dependencies
         working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
-      - name: Add Git field to Testmo resources
-        working-directory: ./Valverde-Cano-Pruebas
-        run: |
-          npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
+      # Optionally add a couple of fields such as the git hash and link to the build
+      - run: |
+          npx testmo automation:resources:add-field --name git --type string \
+            --value ${GITHUB_SHA:0:7} --resources resources.json
           RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          npx testmo automation:resources:add-link --name build --url $RUN_URL --resources resources.json
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          npx testmo automation:resources:add-link --name build \
+            --url $RUN_URL --resources resources.json
 
-      - name: Create test run in Testmo
+      # Create test run
+      - name: Create Testmo Test Run
         run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
@@ -73,16 +62,16 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 19
+          cache: npm
 
       - name: Install dependencies
         working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
+      # Run automated tests and report results to Testmo
       - name: Run tests and report results to Testmo
         run: |
           npx testmo automation:run:submit-thread \
@@ -103,17 +92,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: 19
+          cache: npm
 
       - name: Install dependencies
         working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
-      - name: Mark test run complete in Testmo
+      # Mark test run completed
+      - name: Mark Testmo Run Complete
         run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \
@@ -127,4 +116,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "Deploying .."
+      - run: echo "Deploying.."

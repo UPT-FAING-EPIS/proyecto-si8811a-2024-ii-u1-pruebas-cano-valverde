@@ -1,4 +1,4 @@
-name: Build
+name: Build and Test
 
 on: [push, workflow_dispatch]
 
@@ -30,6 +30,10 @@ jobs:
         run: |
           npm install -g @testmo/testmo-cli
           echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
+
+      # Verify Testmo CLI installation
+      - name: Verify Testmo CLI installation
+        run: npx testmo --version
 
       # Optionally add git hash, link
       - run: |
@@ -77,13 +81,13 @@ jobs:
           pip install pytest pytest-selenium allure-pytest
 
       # Run automated tests and submit results to Testmo
-      - run: |
+      - name: Run Pytest with Selenium and Submit to Testmo
+        run: |
           pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --alluredir=./allure-results
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results allure-results/*.xml \
-            -- npm run pytest
+            --results allure-results/*.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}

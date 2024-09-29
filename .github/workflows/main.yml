@@ -27,22 +27,21 @@ jobs:
 
       - name: Start Selenium Grid
         run: |
-          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0
-          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0
-          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0
-          docker ps -a
+          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0  # Versión de Selenium Hub
+          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0  # Nodo de Chrome
+          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0  # Nodo de Firefox
+          docker ps -a  # Verificación de contenedores Docker
 
       - name: Crear y guardar el Run ID en Testmo
         run: |
           ID=$(npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
-            --project-id 1 \
+            --project-id 1 \  # Cambia el ID del proyecto si es necesario
             --name "Selenium Grid Test Run" \
-            --description "Ejecución de prueba con Selenium Grid" \
-            --suite-id 1 \
+            --suite-id 1 \  # Cambia el ID del suite si es necesario
             --source "selenium-tests")
-          echo "RUN_ID=$ID" >> $GITHUB_ENV
-        shell: bash
+          echo "RUN_ID=$ID" >> $GITHUB_ENV  # Guardar el RUN_ID en las variables de entorno
+        shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
@@ -50,39 +49,38 @@ jobs:
       - name: Run Selenium tests on Grid
         run: |
           source ./venv/bin/activate
-          python3 -m pytest --browser=chrome --alluredir=./allure-results
+          python3 -m pytest --browser=chrome --alluredir=./allure-results  # Ejecutar pytest con Selenium Grid
         env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
-        shell: bash
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub  # URL del Selenium Grid Hub
+        shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
 
-      - name: Generate and upload Allure report
+      - name: Generar y subir reporte de Allure
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
+        - uses: actions/upload-artifact@v3
+          with:
+            name: allure-report
+            path: ./allure-report
 
-      - name: Upload Allure report
-        uses: actions/upload-artifact@v3
-        with:
-          name: allure-report
-          path: ./allure-report
-
-      - name: Submit test results to Testmo
+      - name: Subir resultados a Testmo
         run: |
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "$RUN_ID" \
             --results allure-results/*.xml
-        shell: bash
+        shell: /usr/bin/bash -e {0}
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           RUN_ID: ${{ env.RUN_ID }}
 
-      - name: Complete and mark test run in Testmo
+      - name: Completar y marcar ejecución de prueba en Testmo
         run: |
           npx @testmo/testmo-cli automation:run:complete \
             --instance "$TESTMO_URL" \
             --run-id "$RUN_ID"
-        shell: bash
+        shell: /usr/bin/bash -e {0}
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}

@@ -1,4 +1,4 @@
-name: Build, Test, and Generate Reports
+name: Selenium Grid with Pytest and Testmo Integration
 
 on:
   push:
@@ -10,54 +10,59 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Job para configurar el entorno y ejecutar las pruebas
-  test-setup:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       # Checkout del repositorio
       - uses: actions/checkout@v3
 
-      # Crear el entorno virtual en el directorio correcto
-      - name: Crear entorno virtual
-        working-directory: ./Valverde-Cano-Pruebas  # Cambia al directorio correcto
+      # Configurar Selenium Grid con Docker
+      - name: Configurar Selenium Grid
+        run: |
+          docker pull selenium/standalone-chrome
+          docker run -d -p 4444:4444 --name selenium-grid selenium/standalone-chrome
+
+      # Crear entorno virtual e instalar dependencias
+      - name: Crear entorno virtual e instalar dependencias
+        working-directory: ./Valverde-Cano-Pruebas  # Establecer el directorio correcto
         run: |
           python3 -m venv venv  # Crear el entorno virtual
-          ls -la  # Verificar que el entorno virtual fue creado
-          ls -la ./venv/bin  # Verificar si ./venv/bin existe
-        shell: bash
-
-      # Activar el entorno virtual, instalar dependencias y ejecutar pruebas
-      - name: Activar entorno virtual y ejecutar pruebas
-        working-directory: ./Valverde-Cano-Pruebas  # Cambia al directorio correcto
-        run: |
           source ./venv/bin/activate  # Activar el entorno virtual
           python3 -m pip install --upgrade pip  # Actualizar pip
           pip install -r requirements.txt  # Instalar dependencias desde requirements.txt
+
+      # Ejecutar pruebas con pytest y Selenium
+      - name: Ejecutar pruebas de Selenium con pytest
+        working-directory: ./Valverde-Cano-Pruebas  # Establecer el directorio correcto
+        run: |
+          source ./venv/bin/activate  # Activar el entorno virtual
           python3 -m pytest --browser=chrome --alluredir=./allure-results  # Ejecutar pytest y guardar los resultados
+        shell: bash
+
+      # Enviar resultados de las pruebas a Testmo
+      - name: Enviar resultados a Testmo
+        working-directory: ./Valverde-Cano-Pruebas
+        run: |
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
-            --run-id "25" \
-            --results allure-results/*.xml  # Enviar resultados a Testmo
-        shell: bash
+            --run-id "$RUN_ID" \
+            --results allure-results/*.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          RUN_ID: ${{ secrets.TESTMO_RUN_ID }}
 
-      # Subir logs y videos de pytest (si existen)
-      - name: Upload pytest logs and videos
-        uses: actions/upload-artifact@v3
-        with:
-          name: pytest-logs-and-videos
-          path: ./Valverde-Cano-Pruebas/videos
-
-      # Generar el reporte de Allure y subirlo como artefacto
-      - name: Generate Allure Report
+      # Generar y subir reporte de Allure
+      - name: Generar y subir reporte de Allure
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-      - name: Upload Allure Report
-        uses: actions/upload-artifact@v3
-        with:
-          name: allure-report
-          path: ./Valverde-Cano-Pruebas/allure-report
+        - uses: actions/upload-artifact@v3
+          with:
+            name: allure-report
+            path: ./allure-report
+
+      # Finalizar el proceso eliminando el contenedor de Selenium
+      - name: Finalizar y limpiar
+        run: docker rm -f selenium-grid

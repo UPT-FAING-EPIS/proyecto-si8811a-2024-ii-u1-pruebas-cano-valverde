@@ -32,6 +32,21 @@ jobs:
           python3 -m pip install --upgrade pip  # Actualizar pip
           pip install -r requirements.txt  # Instalar dependencias desde requirements.txt
 
+      # Crear la ejecución de pruebas en Testmo
+      - name: Crear ejecución de prueba en Testmo
+        id: testmo-run
+        run: |
+          RUN_ID=$(npx @testmo/testmo-cli automation:run:create \
+            --instance "$TESTMO_URL" \
+            --title "Selenium Test Run" \
+            --description "Descripción de la ejecución de prueba" \
+            --suite-id 1)  # Cambia el ID del suite si es necesario
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV  # Guardar el RUN_ID en las variables de entorno
+
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
       # Ejecutar pruebas con pytest y Selenium
       - name: Ejecutar pruebas de Selenium con pytest
         working-directory: ./Valverde-Cano-Pruebas  # Establecer el directorio correcto
@@ -51,9 +66,9 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-          RUN_ID: ${{ secrets.TESTMO_RUN_ID }}
+          RUN_ID: ${{ env.RUN_ID }}
 
-      # Generar reporte de Allure
+      # Generar y subir reporte de Allure
       - name: Generar reporte de Allure
         working-directory: ./Valverde-Cano-Pruebas
         run: |

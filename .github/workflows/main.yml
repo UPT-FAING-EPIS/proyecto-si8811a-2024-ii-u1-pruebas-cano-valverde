@@ -37,7 +37,7 @@ jobs:
           RUN_ID=$(npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \  # Cambia el ID del proyecto si es necesario
-            --title "Selenium Grid Test Run" \
+            --name "Selenium Grid Test Run" \
             --description "Ejecución de prueba con Selenium Grid" \
             --suite-id 1)  # Cambia el ID del suite si es necesario
           echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV  # Guardar el RUN_ID en las variables de entorno

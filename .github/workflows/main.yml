@@ -54,10 +54,11 @@ jobs:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
         shell: bash
 
-      - name: Generar y subir reporte de Allure
-        working-directory: ./Valverde-Cano-Pruebas
+      - name: Generar reporte de Allure
         run: |
           allure generate ./allure-results --clean -o ./allure-report
+
+      - name: Subir reporte de Allure como artifact
         uses: actions/upload-artifact@v3
         with:
           name: allure-report

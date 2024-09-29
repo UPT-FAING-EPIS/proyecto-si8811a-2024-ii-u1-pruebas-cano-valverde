@@ -23,9 +23,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium pytest-allure-adaptor
 
-      - name: Install Testmo CLI
+      - name: Download and Install Testmo CLI
         run: |
-          curl -L https://get.testmo.com/cli.sh | sh
+          curl -L https://get.testmo.com/cli/testmo-linux-amd64 -o testmo
+          chmod +x testmo
+          sudo mv testmo /usr/local/bin
 
   test-setup:
     runs-on: ubuntu-latest

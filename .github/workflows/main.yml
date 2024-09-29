@@ -48,18 +48,21 @@ jobs:
         with:
           python-version: '3.x'
 
-      # Crear y activar el entorno virtual, luego almacenar el PATH
+      # Crear y activar el entorno virtual, luego instalar dependencias
       - name: Create and activate virtualenv
         working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
           python3 -m venv venv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
           source venv/bin/activate  # Activar el entorno virtual
-          echo "Activating virtualenv"
           python3 -m pip install --upgrade pip  # Actualizar pip
           pip install -r requirements.txt  # Instalar dependencias del requirements.txt
           pip install pytest  # Instalar pytest
-          echo "PATH=$PATH" >> $GITHUB_ENV  # Guardar PATH en $GITHUB_ENV para que persista
+          pip install -e .  # Instalar el proyecto en modo desarrollo si es necesario
         shell: bash
+
+      # Guardar PATH en GITHUB_ENV para que persista en otros pasos
+      - name: Save Python environment to PATH
+        run: echo "PATH=$PATH" >> $GITHUB_ENV
 
       # Instalar Node.js y Testmo CLI
       - name: Set up Node.js
@@ -101,6 +104,7 @@ jobs:
       - name: Run Selenium tests
         working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
+          source venv/bin/activate  # Activar el entorno virtual
           python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecución directa del comando con el entorno activado
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \

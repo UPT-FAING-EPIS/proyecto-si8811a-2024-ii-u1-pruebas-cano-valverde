@@ -19,14 +19,8 @@ jobs:
           node-version: 19
           cache: 'npm'
 
-      # Ensure both package.json and package-lock.json are present
-      - name: Verify package.json and package-lock.json
-        run: |
-          ls -la package.json
-          ls -la package-lock.json
-          npm install
-
-      - run: echo "Building complete"
+      # Install dependencies
+      - run: npm install
 
   test-setup:
     needs: build
@@ -85,13 +79,9 @@ jobs:
 
       - run: npm ci
 
-      # Execute and submit test results
+      # Ejecución de pruebas con Mocha sin paralelización
       - run: |
-          npx testmo automation:run:submit-thread \
-            --instance "$TESTMO_URL" \
-            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results results/*.xml \
-            -- npm run mocha-junit-parallel
+          npx mocha --reporter node_modules/mocha-junit-reporter --reporter-options jenkinsMode=1,outputs=1,mochaFile=results/mocha-test-results.xml
         env:
           CI_TOTAL: ${{ matrix.ci_total }}
           CI_INDEX: ${{ matrix.ci_index }}

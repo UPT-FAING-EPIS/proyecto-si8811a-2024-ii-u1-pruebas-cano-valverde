@@ -25,6 +25,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium allure-pytest
 
+      # Install Testmo CLI
+      - name: Install Testmo CLI
+        run: |
+          npm install -g @testmo/testmo-cli
+          echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
+
       # Optionally add git hash, link
       - run: |
           npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json

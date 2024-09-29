@@ -21,12 +21,12 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '20'  # Node.js 20 as per the warning
+          node-version: '20'
 
       - name: Install Testmo CLI
         run: |
           npm install -g @testmo/testmo-cli
-          echo "PATH=$(npm bin -g):\$PATH" >> $GITHUB_ENV
+          echo "PATH=$(npm bin -g):$PATH" >> $GITHUB_ENV
 
       - name: Install Python dependencies
         run: |

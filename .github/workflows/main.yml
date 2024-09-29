@@ -18,12 +18,12 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Set up virtual environment
+      - name: Install dependencies
         run: |
           python3 -m venv venv
-          source ./venv/bin/activate
+          . venv/bin/activate
           python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r ./Valverde-Cano-Pruebas/requirements.txt
 
       - name: Start Selenium Grid
         run: |
@@ -48,7 +48,7 @@ jobs:
       - name: Run Selenium tests on Grid
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source ./venv/bin/activate
+          . venv/bin/activate
           python3 -m pytest --browser=chrome --alluredir=./allure-results
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
@@ -97,4 +97,3 @@ jobs:
           docker rm $(docker ps -q --filter ancestor=selenium/node-firefox)
           rm -rf ./allure-results
           rm -rf ./allure-report
-          deactivate

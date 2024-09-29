@@ -23,7 +23,7 @@ jobs:
           python3 -m venv venv
           source ./venv/bin/activate
           python3 -m pip install --upgrade pip
-          pip install -r Valverde-Cano-Pruebas/requirements.txt
+          pip install -r requirements.txt
 
       - name: Start Selenium Grid
         run: |
@@ -32,15 +32,19 @@ jobs:
           docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0
           docker ps -a
 
+      - name: Install Testmo CLI
+        run: |
+          npm install @testmo/testmo-cli@latest -g
+
       - name: Crear y guardar el Run ID en Testmo
         run: |
           ID=$(npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
             --name "Selenium Grid Test Run" \
-            --source "selenium-tests" \
-            --suite-id 1)
+            --source "selenium-tests")  
           echo "RUN_ID=$ID" >> $GITHUB_ENV
+        shell: /usr/bin/bash --noprofile --norc -e -o pipefail {0}
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
@@ -48,23 +52,21 @@ jobs:
       - name: Run Selenium tests on Grid
         working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source ../venv/bin/activate
+          source ./venv/bin/activate
           python3 -m pytest --browser=chrome --alluredir=./allure-results
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
 
-      - name: Generate Allure report
+      - name: Generate and upload Allure report
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
+        - uses: actions/upload-artifact@v3
+          with:
+            name: allure-report
+            path: ./allure-report
 
-      - name: Upload Allure report
-        uses: actions/upload-artifact@v3
-        with:
-          name: allure-report
-          path: ./Valverde-Cano-Pruebas/allure-report
-
-      - name: Subir resultados a Testmo
+      - name: Submit test results to Testmo
         run: |
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \

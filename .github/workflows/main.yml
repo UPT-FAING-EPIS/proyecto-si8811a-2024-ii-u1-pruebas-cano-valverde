@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: '19'
 
-      # 5. Instalar @testmo/testmo-cli globalmente
+      # **Cambio clave: Instalar Testmo CLI globalmente**
       - name: Install Testmo CLI globally
         run: npm install -g @testmo/testmo-cli
 
@@ -46,6 +46,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # **Usar el comando `testmo` después de instalarlo**
       - name: Create and save Testmo Run ID
         run: |
           ID=$(testmo automation:run:create \

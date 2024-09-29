@@ -32,9 +32,9 @@ jobs:
         with:
           node-version: '19'
 
-      # 5. Instalar @testmo/testmo-cli para ejecutar comandos de Testmo
-      - name: Install Testmo CLI
-        run: npm install @testmo/testmo-cli
+      # 5. Instalar @testmo/testmo-cli globalmente
+      - name: Install Testmo CLI globally
+        run: npm install -g @testmo/testmo-cli
 
   test-setup:
     needs: build
@@ -48,7 +48,7 @@ jobs:
 
       - name: Create and save Testmo Run ID
         run: |
-          ID=$(npx testmo automation:run:create \
+          ID=$(testmo automation:run:create \
           --instance "$TESTMO_URL" \
           --project-id 1 \
           --name "Parallel Selenium Test Run" \
@@ -81,7 +81,7 @@ jobs:
 
       - name: Submit Test Results to Testmo
         run: |
-          npx testmo automation:run:submit-thread \
+          testmo automation:run:submit-thread \
           --instance "$TESTMO_URL" \
           --run-id "$RUN_ID" \
           --results allure-results/*.xml
@@ -101,7 +101,7 @@ jobs:
 
       - name: Mark Test Run Complete in Testmo
         run: |
-          npx testmo automation:run:complete \
+          testmo automation:run:complete \
           --instance "$TESTMO_URL" \
           --run-id "$RUN_ID"
         env:

@@ -20,8 +20,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 19
-          cache: npm
-
+          
       # Usamos npm install en lugar de npm ci
       - name: Install dependencies
         run: npm install
@@ -64,7 +63,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 19
-          cache: npm
 
       - name: Install dependencies
         run: npm install
@@ -92,7 +90,6 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 19
-          cache: npm
 
       - name: Install dependencies
         run: npm install

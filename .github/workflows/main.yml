@@ -36,6 +36,10 @@ jobs:
       - name: Install Testmo CLI globally
         run: npm install -g @testmo/testmo-cli
 
+      # **Verificar instalación de Testmo CLI**
+      - name: Verify Testmo CLI installation
+        run: testmo --version
+
   test-setup:
     needs: build
     runs-on: ubuntu-latest

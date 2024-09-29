@@ -1,4 +1,4 @@
-name: Build and Test
+name: Build and Test with Parallel Execution
 
 on:
   push:
@@ -18,13 +18,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'  # Puedes ajustar esto a la versión de Python que uses
+          python-version: '3.x'
 
       # 3. Instalar dependencias de Python y pytest
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install pytest allure-pytest
+          pip install pytest-xdist allure-pytest
 
       # 4. Crear la ejecución de pruebas en Testmo
       - name: Create and save the Testmo Run ID
@@ -32,17 +32,17 @@ jobs:
           ID=$(npx testmo automation:run:create \
           --instance "$TESTMO_URL" \
           --project-id 1 \
-          --name "Selenium Grid Test Run" \
+          --name "Parallel Selenium Test Run" \
           --source "selenium-tests")
-          echo "RUN_ID=$ID" >> $GITHUB_ENV  # Guardar el RUN_ID
+          echo "RUN_ID=$ID" >> $GITHUB_ENV
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # 5. Ejecutar las pruebas con pytest
-      - name: Run Selenium tests with pytest
+      # 5. Ejecutar las pruebas con pytest en paralelo
+      - name: Run Selenium tests in parallel with pytest
         run: |
-          pytest --alluredir=./allure-results
+          pytest -n auto --dist=loadscope --alluredir=./allure-results
         env:
           SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -85,4 +85,3 @@ jobs:
         with:
           name: allure-report
           path: ./allure-report
-

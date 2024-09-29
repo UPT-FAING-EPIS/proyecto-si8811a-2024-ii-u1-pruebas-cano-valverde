@@ -42,20 +42,21 @@ jobs:
         run: |
           docker-compose up -d
 
-      # Instalar Python y crear el entorno virtual
+      # Instalar Python y crear el entorno virtual con la versión 3.12 de Python
       - name: Set up Python
         uses: actions/setup-python@v2
         with:
-          python-version: '3.x'
+          python-version: '3.12'  # Especificar la versión de Python 3.12
 
       # Crear y activar el entorno virtual, luego instalar dependencias
       - name: Create and activate virtualenv
         working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
         run: |
-          python3 -m venv venv  # Crear entorno virtual dentro de Valverde-Cano-Pruebas
+          python3 -m venv venv  # Crear entorno virtual
+          ls -la  # Verificar que la carpeta venv fue creada
           source venv/bin/activate  # Activar el entorno virtual
           python3 -m pip install --upgrade pip  # Actualizar pip
-          pip install -r requirements.txt  # Instalar dependencias del requirements.txt
+          pip install -r requirements.txt  # Instalar dependencias
         shell: bash
 
       # Guardar PATH en GITHUB_ENV para que persista en otros pasos
@@ -100,10 +101,10 @@ jobs:
 
       # Ejecutar pruebas en paralelo para cada navegador
       - name: Run Selenium tests
-        working-directory: ./Valverde-Cano-Pruebas  # Asegúrate de estar en el directorio correcto
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source venv/bin/activate  # Activar el entorno virtual
-          python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecución directa del comando con el entorno activado
+          source venv/bin/activate  # Asegúrate de activar el entorno virtual
+          python3 -m pytest --browser=${{ matrix.browser }} --alluredir=./allure-results  # Ejecutar pytest
           npx @testmo/testmo-cli automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \

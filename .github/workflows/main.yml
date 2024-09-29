@@ -1,119 +1,88 @@
-name: Build and Test with Testmo
+name: Build and Test
 
-on: 
+on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      # 1. Clonar el repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      # Node setup with version 19 and NPM cache
-      - uses: actions/setup-node@v3
+      # 2. Configurar Python en la versión necesaria
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          node-version: 19
-          cache: 'npm'
+          python-version: '3.x'  # Puedes ajustar esto a la versión de Python que uses
 
-      # Install dependencies
-      - run: npm install
+      # 3. Instalar dependencias de Python y pytest
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pytest allure-pytest
 
-  test-setup:
-    needs: build
-    runs-on: ubuntu-latest
-    outputs:
-      testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 19
-          cache: npm
-
-      - run: npm ci
-
-      # Optionally add git hash and build link fields
-      - run: |
-          npx testmo automation:resources:add-field --name git --type string \
-            --value ${GITHUB_SHA:0:7} --resources resources.json
-          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          npx testmo automation:resources:add-link --name build \
-            --url $RUN_URL --resources resources.json
-
-      # Create a new test run in Testmo
-      - run: |
-          npx testmo automation:run:create \
-            --instance "$TESTMO_URL" \
-            --project-id 1 \
-            --name "Parallel mocha test run" \
-            --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
-          ID=$(cat testmo-run-id.txt)
-          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
+      # 4. Crear la ejecución de pruebas en Testmo
+      - name: Create and save the Testmo Run ID
+        run: |
+          ID=$(npx testmo automation:run:create \
+          --instance "$TESTMO_URL" \
+          --project-id 1 \
+          --name "Selenium Grid Test Run" \
+          --source "selenium-tests")
+          echo "RUN_ID=$ID" >> $GITHUB_ENV  # Guardar el RUN_ID
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        id: run-tests
 
-  test:
-    needs: test-setup
-    runs-on: ubuntu-latest
-
-    strategy:
-      fail-fast: false
-      matrix:
-        ci_index: [0, 1, 2, 3]
-        ci_total: [4]
-
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 19
-          cache: npm
-
-      - run: npm ci
-
-      # Ejecución de pruebas con Mocha sin paralelización
-      - run: |
-          npx mocha --reporter node_modules/mocha-junit-reporter --reporter-options jenkinsMode=1,outputs=1,mochaFile=results/mocha-test-results.xml
+      # 5. Ejecutar las pruebas con pytest
+      - name: Run Selenium tests with pytest
+        run: |
+          pytest --alluredir=./allure-results
         env:
-          CI_TOTAL: ${{ matrix.ci_total }}
-          CI_INDEX: ${{ matrix.ci_index }}
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-  test-complete:
-    needs: [test-setup, test]
-    if: always()
-    runs-on: ubuntu-latest
+      # 6. Subir los resultados de pytest a Testmo
+      - name: Submit Test Results to Testmo
+        run: |
+          npx testmo automation:run:submit-thread \
+          --instance "$TESTMO_URL" \
+          --run-id "$RUN_ID" \
+          --results allure-results/*.xml
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          RUN_ID: ${{ env.RUN_ID }}
 
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: 19
-          cache: npm
-          
-      - run: npm ci
-
-      # Mark test run as completed in Testmo
-      - run: |
+      # 7. Completar la ejecución de la prueba en Testmo
+      - name: Mark Test Run Complete in Testmo
+        run: |
           npx testmo automation:run:complete \
-            --instance "$TESTMO_URL" \
-            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
+          --instance "$TESTMO_URL" \
+          --run-id "$RUN_ID"
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          RUN_ID: ${{ env.RUN_ID }}
+
+      # 8. Generar y subir el reporte de Allure
+      - name: Generate and Upload Allure report
+        run: |
+          allure generate ./allure-results --clean -o ./allure-report
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-  deploy:
-    needs: [test, test-complete]
-    runs-on: ubuntu-latest
+      # 9. Subir el reporte de Allure como artefacto
+      - name: Upload Allure report
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: ./allure-report
 
-    steps:
-      - run: echo "Deploying the application..."

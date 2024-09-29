@@ -38,8 +38,7 @@ jobs:
             --instance "$TESTMO_URL" \
             --project-id 1 \
             --name "Selenium Grid Test Run" \
-            --source "selenium-tests" \
-            --suite-id 1)
+            --source "selenium-tests")
           echo "RUN_ID=$ID" >> $GITHUB_ENV
         shell: bash
         env:

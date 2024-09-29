@@ -56,8 +56,6 @@ jobs:
           source venv/bin/activate  # Activar el entorno virtual
           python3 -m pip install --upgrade pip  # Actualizar pip
           pip install -r requirements.txt  # Instalar dependencias del requirements.txt
-          pip install pytest  # Instalar pytest
-          pip install -e .  # Instalar el proyecto en modo desarrollo si es necesario
         shell: bash
 
       # Guardar PATH en GITHUB_ENV para que persista en otros pasos

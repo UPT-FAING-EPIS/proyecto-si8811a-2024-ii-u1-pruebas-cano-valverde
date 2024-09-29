@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: Set up Testmo Test Run
         run: |
-          testmo run:create --name "Parallel Pytest Run" --project-id <YOUR_PROJECT_ID>
+          testmo run:create --name "Parallel Pytest Run" --project-id 1
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -66,7 +66,7 @@ jobs:
 
       - name: Submit Test Results to Testmo
         run: |
-          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
+          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -88,7 +88,7 @@ jobs:
     steps:
       - name: Mark Testmo Run as Complete
         run: |
-          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
+          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}

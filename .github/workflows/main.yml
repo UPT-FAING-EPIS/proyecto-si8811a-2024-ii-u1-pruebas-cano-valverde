@@ -1,6 +1,10 @@
 name: Build and Test with Testmo
 
-on: [push, workflow_dispatch]
+on: 
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -8,7 +12,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - run: echo "Building.."
+
+      # Node setup with version 19 and NPM cache
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19
+          cache: 'npm'
+
+      # Install dependencies based on package.json
+      - run: npm ci
+
+      - run: echo "Building complete"
 
   test-setup:
     needs: build
@@ -22,11 +36,10 @@ jobs:
         with:
           node-version: 19
           cache: npm
-      - name: Install dependencies
-        working-directory: ./Valverde-Cano-Pruebas
-        run: npm install
 
-      # Optionally add a couple of fields such as the git hash and link to the build
+      - run: npm ci
+
+      # Optionally add git hash and build link fields
       - run: |
           npx testmo automation:resources:add-field --name git --type string \
             --value ${GITHUB_SHA:0:7} --resources resources.json
@@ -34,9 +47,8 @@ jobs:
           npx testmo automation:resources:add-link --name build \
             --url $RUN_URL --resources resources.json
 
-      # Create test run
-      - name: Create Testmo Test Run
-        run: |
+      # Create a new test run in Testmo
+      - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
@@ -67,13 +79,10 @@ jobs:
           node-version: 19
           cache: npm
 
-      - name: Install dependencies
-        working-directory: ./Valverde-Cano-Pruebas
-        run: npm install
+      - run: npm ci
 
-      # Run automated tests and report results to Testmo
-      - name: Run tests and report results to Testmo
-        run: |
+      # Execute and submit test results
+      - run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
@@ -96,14 +105,11 @@ jobs:
         with:
           node-version: 19
           cache: npm
+          
+      - run: npm ci
 
-      - name: Install dependencies
-        working-directory: ./Valverde-Cano-Pruebas
-        run: npm install
-
-      # Mark test run completed
-      - name: Mark Testmo Run Complete
-        run: |
+      # Mark test run as completed in Testmo
+      - run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
@@ -116,4 +122,4 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - run: echo "Deploying.."
+      - run: echo "Deploying the application..."

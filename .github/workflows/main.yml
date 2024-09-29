@@ -27,20 +27,20 @@ jobs:
 
       - name: Start Selenium Grid
         run: |
-          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0  # Versión de Selenium Hub
-          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0  # Nodo de Chrome
-          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0  # Nodo de Firefox
-          docker ps -a  # Verificación de contenedores Docker
+          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0
+          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0
+          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0
+          docker ps -a
 
       - name: Crear y guardar el Run ID en Testmo
         run: |
-          RUN_ID=$(npx @testmo/testmo-cli automation:run:create \
+          ID=$(npx @testmo/testmo-cli automation:run:create \
             --instance "$TESTMO_URL" \
-            --project-id 1 \  # Cambia el ID del proyecto si es necesario
+            --project-id 1 \
             --name "Selenium Grid Test Run" \
             --description "Ejecución de prueba con Selenium Grid" \
-            --suite-id 1)  # Cambia el ID del suite si es necesario
-          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV  # Guardar el RUN_ID en las variables de entorno
+            --suite-id 1)
+          echo "RUN_ID=$ID" >> $GITHUB_ENV
         shell: bash
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -49,9 +49,9 @@ jobs:
       - name: Run Selenium tests on Grid
         run: |
           source ./venv/bin/activate
-          python3 -m pytest --browser=chrome --alluredir=./allure-results  # Ejecutar pytest con Selenium Grid
+          python3 -m pytest --browser=chrome --alluredir=./allure-results
         env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub  # URL del Selenium Grid Hub
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
         shell: bash
 
       - name: Generate and upload Allure report

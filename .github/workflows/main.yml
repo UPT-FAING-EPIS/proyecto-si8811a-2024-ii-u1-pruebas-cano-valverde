@@ -21,11 +21,10 @@ jobs:
         with:
           node-version: 19
           
-      # Usamos npm install en lugar de npm ci
       - name: Install dependencies
+        working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
-      # Opcionalmente agregar un par de campos como el hash de git y un enlace a la build
       - run: |
           npx testmo automation:resources:add-field --name git --type string \
             --value ${GITHUB_SHA:0:7} --resources resources.json
@@ -33,7 +32,6 @@ jobs:
           npx testmo automation:resources:add-link --name build \
             --url $RUN_URL --resources resources.json
 
-      # Crear el run de pruebas
       - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
@@ -65,15 +63,15 @@ jobs:
           node-version: 19
 
       - name: Install dependencies
+        working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
-      # Ejecutar pruebas automatizadas y reportar resultados a Testmo
       - run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
             --results results/*.xml \
-            -- npm run mocha-junit-parallel # Nota el espacio después de --
+            -- npm run mocha-junit-parallel
         env:
           CI_TOTAL: ${{ matrix.ci_total }}
           CI_INDEX: ${{ matrix.ci_index }}
@@ -92,9 +90,9 @@ jobs:
           node-version: 19
 
       - name: Install dependencies
+        working-directory: ./Valverde-Cano-Pruebas
         run: npm install
 
-      # Marcar el run de pruebas como completado
       - run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \

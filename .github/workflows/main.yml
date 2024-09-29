@@ -27,6 +27,7 @@ jobs:
         run: |
           npm install -g @testmo/testmo-cli
           echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
+          export PATH=$(npm root -g)/.bin:$PATH
 
       - name: Install Python dependencies
         run: |

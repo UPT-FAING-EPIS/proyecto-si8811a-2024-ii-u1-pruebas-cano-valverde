@@ -1,4 +1,4 @@
-name: Build and Test with Parallel Execution
+name: Build and Parallel Test with Testmo
 
 on:
   push:
@@ -21,13 +21,32 @@ jobs:
           python-version: '3.x'
 
       # 3. Instalar dependencias de Python y pytest
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           pip install -r requirements.txt
           pip install pytest-xdist allure-pytest
 
-      # 4. Crear la ejecución de pruebas en Testmo
-      - name: Create and save the Testmo Run ID
+      # 4. Configurar Node.js para npx
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '19'
+
+      # 5. Instalar @testmo/testmo-cli para ejecutar comandos de Testmo
+      - name: Install Testmo CLI
+        run: npm install @testmo/testmo-cli
+
+  test-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create and save Testmo Run ID
         run: |
           ID=$(npx testmo automation:run:create \
           --instance "$TESTMO_URL" \
@@ -39,7 +58,19 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # 5. Ejecutar las pruebas con pytest en paralelo
+  test:
+    needs: test-setup
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ci_index: [0, 1, 2, 3]
+        ci_total: [4]
+
+    steps:
+      - uses: actions/checkout@v3
+
       - name: Run Selenium tests in parallel with pytest
         run: |
           pytest -n auto --dist=loadscope --alluredir=./allure-results
@@ -48,7 +79,6 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # 6. Subir los resultados de pytest a Testmo
       - name: Submit Test Results to Testmo
         run: |
           npx testmo automation:run:submit-thread \
@@ -60,7 +90,15 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           RUN_ID: ${{ env.RUN_ID }}
 
-      # 7. Completar la ejecución de la prueba en Testmo
+  test-complete:
+    needs: [test-setup, test]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Mark Test Run Complete in Testmo
         run: |
           npx testmo automation:run:complete \
@@ -71,17 +109,9 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           RUN_ID: ${{ env.RUN_ID }}
 
-      # 8. Generar y subir el reporte de Allure
-      - name: Generate and Upload Allure report
-        run: |
-          allure generate ./allure-results --clean -o ./allure-report
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+  deploy:
+    needs: [test-complete]
+    runs-on: ubuntu-latest
 
-      # 9. Subir el reporte de Allure como artefacto
-      - name: Upload Allure report
-        uses: actions/upload-artifact@v3
-        with:
-          name: allure-report
-          path: ./allure-report
+    steps:
+      - run: echo "Deploying..."

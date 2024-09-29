@@ -1,4 +1,4 @@
-name: Parallel Pytest with Selenium Grid, Allure, and Testmo
+name: Parallel Pytest with Selenium Grid, Allure, and Testmo Integration
 
 on:
   push:
@@ -21,7 +21,11 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-selenium pytest-allure-adaptor testmo
+          pip install pytest pytest-selenium pytest-allure-adaptor
+
+      - name: Install Testmo CLI
+        run: |
+          curl -L https://get.testmo.com/cli.sh | sh
 
   test-setup:
     runs-on: ubuntu-latest
@@ -52,7 +56,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pytest pytest-selenium pytest-allure-adaptor testmo
+          pip install pytest pytest-selenium pytest-allure-adaptor
 
       - name: Run Pytest with Selenium Grid on ${{ matrix.browser }}
         run: |
@@ -62,7 +66,7 @@ jobs:
 
       - name: Submit Test Results to Testmo
         run: |
-          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
+          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -84,7 +88,7 @@ jobs:
     steps:
       - name: Mark Testmo Run as Complete
         run: |
-          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
+          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}

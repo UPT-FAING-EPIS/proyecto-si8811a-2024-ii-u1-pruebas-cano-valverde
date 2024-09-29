@@ -1,108 +1,112 @@
-name: Parallel Pytest with Selenium Grid, Allure, and Testmo Integration
+name: Build
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+on: [push, workflow_dispatch]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '20'
-
-      - name: Install Testmo CLI
-        run: |
-          npm install -g @testmo/testmo-cli
-          echo "PATH=$(npm bin -g):$PATH" >> $GITHUB_ENV
-          echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-selenium pytest-allure-adaptor
+      - uses: actions/checkout@v3
+      - run: echo "Building .."
 
   test-setup:
-    runs-on: ubuntu-latest
     needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
+
     steps:
-      - name: Set up Testmo Test Run
-        run: |
-          testmo run:create --name "Parallel Pytest Run" --project-id 1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-selenium allure-pytest
+
+      # Optionally add git hash, link
+      - run: |
+          npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          npx testmo automation:resources:add-link --name build --url $RUN_URL --resources resources.json
+
+      # Create test run
+      - run: |
+          npx testmo automation:run:create \
+            --instance "$TESTMO_URL" \
+            --project-id 1 \
+            --name "Parallel Pytest Test Run" \
+            --resources resources.json \
+            --source "unit-tests" > testmo-run-id.txt
+          ID=$(cat testmo-run-id.txt)
+          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
         env:
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        id: run-tests
 
   test:
-    runs-on: ubuntu-latest
     needs: test-setup
+    runs-on: ubuntu-latest
+
     strategy:
+      fail-fast: false
       matrix:
         browser: [chrome, firefox, edge]
+
     services:
       selenium:
         image: selenium/standalone-chrome
         ports:
           - 4444:4444
+
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install pytest pytest-selenium pytest-allure-adaptor
-
-      - name: Run Pytest with Selenium Grid on ${{ matrix.browser }}
-        run: |
-          pytest --driver Remote --capability browserName=${{ matrix.browser }} --alluredir=./allure-results
-        env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
-
-      - name: Submit Test Results to Testmo
-        run: |
-          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
-        env:
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-
-      - name: Generate Allure Report
-        run: |
-          allure generate ./allure-results --clean -o ./allure-report
-          zip -r allure-report.zip ./allure-report
-
-      - name: Upload Allure Report
-        uses: actions/upload-artifact@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
-          name: allure-report
-          path: allure-report.zip
+          python-version: '3.x'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-selenium allure-pytest
+
+      # Run automated tests and submit results to Testmo
+      - run: |
+          pytest --driver Remote --capability browserName=${{ matrix.browser }} --alluredir=./allure-results
+          npx testmo automation:run:submit-thread \
+            --instance "$TESTMO_URL" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
+            --results allure-results/*.xml \
+            -- npm run pytest
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
   test-complete:
+    needs: [test-setup, test]
+    if: always()
     runs-on: ubuntu-latest
-    needs: test
+
     steps:
-      - name: Mark Testmo Run as Complete
-        run: |
-          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 19
+          cache: npm
+      - run: npm ci
+
+      # Mark test run completed
+      - run: |
+          npx testmo automation:run:complete \
+            --instance "$TESTMO_URL" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
         env:
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
   deploy:
+    needs: [test, test-complete]
     runs-on: ubuntu-latest
-    needs: test-complete
+
     steps:
-      - name: Deploy Application
-        run: echo "Deployment step here"
+      - run: echo "Deploying .."

@@ -88,8 +88,9 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Upload npm logs for debugging immediately after test step
+      # Upload npm logs for debugging immediately after test step, ensure upload even if tests fail
       - name: Upload npm logs
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: npm-debug-log

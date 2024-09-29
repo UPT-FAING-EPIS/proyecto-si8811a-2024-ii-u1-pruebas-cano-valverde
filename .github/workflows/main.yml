@@ -53,15 +53,18 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           RUN_ID: ${{ secrets.TESTMO_RUN_ID }}
 
-      # Generar y subir reporte de Allure
-      - name: Generar y subir reporte de Allure
+      # Generar reporte de Allure
+      - name: Generar reporte de Allure
         working-directory: ./Valverde-Cano-Pruebas
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-        - uses: actions/upload-artifact@v3
-          with:
-            name: allure-report
-            path: ./allure-report
+
+      # Subir el reporte de Allure como artefacto
+      - name: Subir reporte de Allure
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-report
+          path: ./Valverde-Cano-Pruebas/allure-report
 
       # Finalizar el proceso eliminando el contenedor de Selenium
       - name: Finalizar y limpiar

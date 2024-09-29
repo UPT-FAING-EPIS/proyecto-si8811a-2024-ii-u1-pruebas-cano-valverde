@@ -26,8 +26,7 @@ jobs:
       - name: Install Testmo CLI
         run: |
           npm install -g @testmo/testmo-cli
-          echo "PATH=$(npm bin -g):$PATH" >> $GITHUB_ENV
-          npm bin -g | tee -a $GITHUB_ENV
+          echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
 
       - name: Install Python dependencies
         run: |
@@ -40,7 +39,7 @@ jobs:
     steps:
       - name: Set up Testmo Test Run
         run: |
-          testmo run:create --name "Parallel Pytest Run" --project-id 1
+          testmo run:create --name "Parallel Pytest Run" --project-id <YOUR_PROJECT_ID>
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -73,7 +72,7 @@ jobs:
 
       - name: Submit Test Results to Testmo
         run: |
-          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
+          testmo run:submit-thread --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
@@ -95,7 +94,7 @@ jobs:
     steps:
       - name: Mark Testmo Run as Complete
         run: |
-          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id 1
+          testmo run:complete --run-id ${{ steps.test-setup.outputs.run-id }} --project-id <YOUR_PROJECT_ID>
         env:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
           TESTMO_URL: ${{ secrets.TESTMO_URL }}

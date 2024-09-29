@@ -39,7 +39,8 @@ jobs:
             --project-id 1 \
             --name "Selenium Grid Test Run" \
             --description "Ejecución de prueba con Selenium Grid" \
-            --suite-id 1)
+            --suite-id 1 \
+            --source "selenium-tests")
           echo "RUN_ID=$ID" >> $GITHUB_ENV
         shell: bash
         env:

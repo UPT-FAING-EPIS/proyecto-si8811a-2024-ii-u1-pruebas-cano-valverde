@@ -18,50 +18,36 @@ jobs:
         with:
           python-version: 3.12
 
-      - name: Set up virtual environment
+      - name: Install dependencies
         run: |
           python3 -m venv venv
           source ./venv/bin/activate
           python3 -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r Valverde-Cano-Pruebas/requirements.txt
 
       - name: Start Selenium Grid
         run: |
-          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0
-          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0
-          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0
-          docker ps -a
-
-      - name: Crear y guardar el Run ID en Testmo
-        run: |
-          ID=$(npx @testmo/testmo-cli automation:run:create \
-            --instance "$TESTMO_URL" \
-            --project-id 1 \
-            --name "Selenium Grid Test Run" \
-            --source "selenium-tests")
-          echo "RUN_ID=$ID" >> $GITHUB_ENV
-        shell: bash
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+          docker run -d -p 4444:4444 --name selenium-hub selenium/hub:4.5.0  # Versión de Selenium Hub
+          docker run -d --link selenium-hub:hub selenium/node-chrome:4.5.0  # Nodo de Chrome
+          docker run -d --link selenium-hub:hub selenium/node-firefox:4.5.0  # Nodo de Firefox
+          docker run -d --link selenium-hub:hub selenium/node-edge:4.5.0  # Nodo de Edge
+          docker ps -a  # Verificación de contenedores Docker
 
       - name: Run Selenium tests on Grid
+        working-directory: ./Valverde-Cano-Pruebas
         run: |
-          source ./venv/bin/activate
-          python3 -m pytest --browser=chrome --alluredir=./allure-results
+          source ../venv/bin/activate
+          python3 -m pytest --browser=chrome --alluredir=./allure-results  # Ejecutar pytest con Selenium Grid
         env:
-          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub
-        shell: bash
+          SELENIUM_REMOTE_URL: http://localhost:4444/wd/hub  # URL del Selenium Grid Hub
 
-      - name: Generar reporte de Allure
+      - name: Generate and upload Allure report
         run: |
           allure generate ./allure-results --clean -o ./allure-report
-
-      - name: Subir reporte de Allure como artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: allure-report
-          path: ./allure-report
+        - uses: actions/upload-artifact@v3
+          with:
+            name: allure-report
+            path: ./allure-report
 
       - name: Subir resultados a Testmo
         run: |
@@ -90,8 +76,10 @@ jobs:
           docker rm selenium-hub
           docker stop $(docker ps -q --filter ancestor=selenium/node-chrome)
           docker stop $(docker ps -q --filter ancestor=selenium/node-firefox)
+          docker stop $(docker ps -q --filter ancestor=selenium/node-edge)
           docker rm $(docker ps -q --filter ancestor=selenium/node-chrome)
           docker rm $(docker ps -q --filter ancestor=selenium/node-firefox)
+          docker rm $(docker ps -q --filter ancestor=selenium/node-edge)
           rm -rf ./allure-results
           rm -rf ./allure-report
           deactivate

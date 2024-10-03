@@ -28,14 +28,10 @@ jobs:
         run: |
           npm install -g @testmo/testmo-cli@1.4.2
           echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
-      - name: Verificar instalación de Testmo CLI
-        run: npx testmo --version
+          npx testmo --version  # Verificar si Testmo está instalado correctamente
 
-      - run: |
-          npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
-          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-          npx testmo automation:resources:add-link --name build --url $RUN_URL --resources resources.json
-      - run: |
+      - name: Crear Run en Testmo
+        run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
@@ -47,7 +43,6 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
-        id: run-tests
 
   test:
     needs: test-setup

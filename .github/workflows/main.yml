@@ -101,12 +101,14 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Subir logs npm
-        if: always()
+      - name: Subir logs npm y pytest
+        if: always()  # Esto asegura que los logs se suban incluso si las pruebas fallan
         uses: actions/upload-artifact@v3
         with:
-          name: npm-debug-log
-          path: /home/runner/.npm/_logs/*.log
+          name: test-logs
+          path: |
+            /home/runner/.npm/_logs/*.log
+            pytest.log
 
   test-complete:
     needs: [test-setup, test]

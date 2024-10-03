@@ -102,13 +102,20 @@ jobs:
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
       - name: Subir logs npm y pytest
-        if: always()  # Esto asegura que los logs se suban incluso si las pruebas fallan
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: test-logs
           path: |
             /home/runner/.npm/_logs/*.log
             pytest.log
+
+      - name: Subir Reportes Allure
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-results
+          path: allure-results
 
   test-complete:
     needs: [test-setup, test]

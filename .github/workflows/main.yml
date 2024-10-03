@@ -24,21 +24,17 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium allure-pytest
-      # Instalar Testmo CLI versión 1.4.2
       - name: Instalar Testmo CLI versión 1.4.2
         run: |
           npm install -g @testmo/testmo-cli@1.4.2
           echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
-      # Verificar instalación de Testmo CLI
       - name: Verificar instalación de Testmo CLI
         run: npx testmo --version
 
-      # Agregar hash de git y enlace
       - run: |
           npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
           RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
           npx testmo automation:resources:add-link --name build --url $RUN_URL --resources resources.json
-      # Crear una ejecución de pruebas en Testmo
       - run: |
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
@@ -64,9 +60,27 @@ jobs:
 
     services:
       selenium:
-        image: selenium/hub:4.25.0  # Usando la última versión de Selenium Hub (4.25.0)
+        image: selenium/hub:4.25.0
         ports:
           - 4444:4444
+      chrome:
+        image: selenium/node-chrome:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      firefox:
+        image: selenium/node-firefox:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      edge:
+        image: selenium/node-edge:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
 
     steps:
       - uses: actions/checkout@v3
@@ -76,10 +90,9 @@ jobs:
       - run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium allure-pytest
-      # Ejecutar pruebas automatizadas y enviar resultados a Testmo
       - name: Ejecutar Pytest con Selenium y enviar resultados a Testmo
         run: |
-          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --alluredir=./allure-results
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --timeout=120 --alluredir=./allure-results
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
@@ -88,7 +101,6 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Subir logs npm para debugging en caso de fallos
       - name: Subir logs npm
         if: always()
         uses: actions/upload-artifact@v3
@@ -105,11 +117,10 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: 20  # Configuración de Node.js en la versión 20
+          node-version: 20
           cache: npm
       - run: npm ci
 
-      # Marcar la ejecución de pruebas como completada en Testmo
       - run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \

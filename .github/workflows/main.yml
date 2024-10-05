@@ -103,13 +103,16 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium allure-pytest
 
-      - name: Ejecutar Pytest con Selenium y enviar resultados a Testmo
+      - name: Ejecutar Pytest con Selenium y generar XML para Testmo
         run: |
-          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --alluredir=./allure-results
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results.xml --alluredir=./allure-results
+
+      - name: Enviar resultados a Testmo
+        run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results allure-results/*.xml
+            --results pytest-results.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}

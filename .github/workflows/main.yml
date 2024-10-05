@@ -114,9 +114,11 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Comprimir y subir Reportes Allure
+      - name: Comprimir Reportes Allure
         run: |
           zip -r allure-results.zip allure-results
+
+      - name: Subir Reportes Allure
         if: always()
         uses: actions/upload-artifact@v3
         with:

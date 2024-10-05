@@ -57,3 +57,57 @@ graph TD
     I --> K[Video de prueba disponible]
     J --> K[Video de prueba disponible]
 ```
+### Diagrama del pipeline
+```mermaid
+graph TD
+    Commit([Commit / Push]) --> A[Build]
+    A --> B[Test-Setup]
+    B --> C[Test]
+    C --> D[Test-Complete]
+    D --> E[Deploy]
+end
+```
+
+### Diagrama del funcionamiento del pipeline
+```mermaid
+graph TD
+ 
+    subgraph Deploy
+        E1[Job: deploy]
+        E1 --> E2[Deploy Application]
+    end
+
+    subgraph Test-Complete
+        D1[Job: test-complete]
+        D1 --> D2[Complete Testmo Run]
+    end
+
+    subgraph Test
+        C1[Job: test]
+        C1 --> C2[Setup Selenium Services]
+        C2 --> C3[Run Pytest Across Browsers: Chrome, Firefox, Edge]
+        C3 --> C4[Send Results to Testmo]
+        C4 --> C5[Generate Allure Reports]
+    end
+
+    subgraph Test-Setup
+        B1[Job: test-setup]
+        B1 --> B2[Setup Python Environment]
+        B2 --> B3[Install Testmo CLI]
+        B3 --> B4[Create Testmo Run ID]
+    end
+
+    subgraph Build
+        A1[Job: build]
+        A1 --> A2[Checkout Code]
+        A2 --> A3[Run Build Command]
+    end
+
+    style A1 fill:#66cc66,stroke:#333,stroke-width:2px
+    style B1 fill:#66cc66,stroke:#333,stroke-width:2px
+    style C1 fill:#66cc66,stroke:#333,stroke-width:2px
+    style D1 fill:#66cc66,stroke:#333,stroke-width:2px
+    style E1 fill:#66cc66,stroke:#333,stroke-width:2px
+
+```
+

@@ -1,9 +1,0 @@
-{
-  "scripts": {
-    "pytest": "pytest --driver Remote --alluredir=./allure-results"
-  },
-  "devDependencies": {
-    "@testmo/testmo-cli": "^1.2.0",
-    "glob": "^8.1.0"
-  }
-}

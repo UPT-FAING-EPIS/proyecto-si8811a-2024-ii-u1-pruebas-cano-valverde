@@ -65,7 +65,13 @@ graph TD
     B --> C[Test]
     C --> D[Test-Complete]
     D --> E[Deploy]
-end
+
+    style A fill:#333,stroke:#fff,stroke-width:2px
+    style B fill:#333,stroke:#fff,stroke-width:2px
+    style C fill:#333,stroke:#fff,stroke-width:2px
+    style D fill:#333,stroke:#fff,stroke-width:2px
+    style E fill:#333,stroke:#fff,stroke-width:2px
+    style Commit fill:#333,stroke:#fff,stroke-width:2px
 ```
 
 ### Diagrama del funcionamiento del pipeline

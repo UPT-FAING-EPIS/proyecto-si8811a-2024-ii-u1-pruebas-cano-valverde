@@ -1,0 +1,1 @@
+Advertencia: Facultad no encontrada en este evento después de marcar el checkbox

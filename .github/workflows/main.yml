@@ -5,7 +5,6 @@ on: [push, workflow_dispatch]
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
       - run: echo "Building .."
@@ -30,7 +29,6 @@ jobs:
           echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
       - name: Verificar instalación de Testmo CLI
         run: npx testmo --version
-
       - run: |
           npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
           RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
@@ -108,6 +106,7 @@ jobs:
           pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=./allure-results-${{ matrix.browser }}
 
       - name: Enviar resultados a Testmo por hilo
+        if: always()  # Se asegura de que se envíen los resultados, incluso si hay fallos
         run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
@@ -132,7 +131,7 @@ jobs:
           cd allure-results-${{ matrix.browser }} && zip -r ../allure-results-${{ matrix.browser }}.zip . && cd ..
 
       - name: Subir Reportes Allure por hilo
-        if: always()
+        if: always()  # Asegura la subida de los reportes aunque las pruebas fallen
         uses: actions/upload-artifact@v3
         with:
           name: allure-results-${{ matrix.browser }}
@@ -140,7 +139,7 @@ jobs:
 
   test-complete:
     needs: [test-setup, test]
-    if: always()
+    if: always()  # Asegura que esta etapa se ejecute aunque las pruebas fallen
     runs-on: ubuntu-latest
 
     steps:
@@ -150,7 +149,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-
       - run: |
           npx testmo automation:run:complete \
             --instance "$TESTMO_URL" \
@@ -162,6 +160,5 @@ jobs:
   deploy:
     needs: [test, test-complete]
     runs-on: ubuntu-latest
-
     steps:
       - run: echo "Deploying .."

@@ -39,4 +39,21 @@ pytest -n 3 --alluredir=./allure-results
 ```powershell
 allure serve ./allure-results
 ```
-
+### Diagrama de selenium grid con allure
+```mermaid
+graph TD
+    A[VS Code - Ejecución de pruebas] -->|Envía pruebas| B[Selenium Grid]
+    B -->|Distribución de pruebas| C[Chrome]
+    B -->|Distribución de pruebas| D[Firefox]
+    B -->|Distribución de pruebas| E[Edge]
+    C -->|Resultados de pruebas| F[Allure Reporter]
+    D -->|Resultados de pruebas| F[Allure Reporter]
+    E -->|Resultados de pruebas| F[Allure Reporter]
+    F -->|Generación de reporte| G[Allure Serve]
+    C -->|Grabación de video| H[Chrome Video Recorder]
+    D -->|Grabación de video| I[Firefox Video Recorder]
+    E -->|Grabación de video| J[Edge Video Recorder]
+    H --> K[Video de prueba disponible]
+    I --> K[Video de prueba disponible]
+    J --> K[Video de prueba disponible]
+```

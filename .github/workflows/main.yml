@@ -39,7 +39,7 @@ jobs:
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
-            --name "Parallel Pytest Test Run" \
+            --name "Pruebas Cano Valverde" \
             --resources resources.json \
             --source "unit-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
@@ -119,7 +119,7 @@ jobs:
 
       - name: Comprimir Reportes Allure
         run: |
-          zip -r allure-results.zip allure-results
+          cd allure-results && zip -r ../allure-results.zip . && cd ..
 
       - name: Subir Reportes Allure
         if: always()

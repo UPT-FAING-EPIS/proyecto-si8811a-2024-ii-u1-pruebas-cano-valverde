@@ -41,7 +41,7 @@ jobs:
             --project-id 1 \
             --name "Parallel Pytest Test Run" \
             --resources resources.json \
-            --source "Pruebas-de-interfaz" > testmo-run-id.txt
+            --source "unit-tests" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
         env:
@@ -125,7 +125,7 @@ jobs:
 
       - name: Subir logs por hilo
         run: |
-          npx testmo automation:resources:add-link --name "${{ matrix.browser }}_log" --path ./logs/${{ matrix.browser }}.log --resources resources.json
+          npx testmo automation:resources:add-link --name "${{ matrix.browser }}_log" --url "https://valgreenupt.testmo.net/automation/runs/1" --resources resources.json
 
       - name: Comprimir Reportes Allure por hilo
         run: |

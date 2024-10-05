@@ -39,9 +39,9 @@ jobs:
           npx testmo automation:run:create \
             --instance "$TESTMO_URL" \
             --project-id 1 \
-            --name "Pruebas Cano Valverde" \
+            --name "Parallel Pytest Test Run" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "Pruebas de interfaz" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
         env:
@@ -105,28 +105,38 @@ jobs:
 
       - name: Ejecutar Pytest con Selenium y generar XML para Testmo
         run: |
-          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results.xml --alluredir=./allure-results
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=./allure-results-${{ matrix.browser }}
 
-      - name: Enviar resultados a Testmo
+      - name: Enviar resultados a Testmo por hilo
         run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
             --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --results pytest-results.xml
+            --results pytest-results-${{ matrix.browser }}.xml
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Comprimir Reportes Allure
+      - name: Agregar detalles personalizados por hilo
         run: |
-          cd allure-results && zip -r ../allure-results.zip . && cd ..
+          npx testmo automation:resources:add-field --name browser --type string --value ${{ matrix.browser }} --resources resources.json
+          npx testmo automation:resources:add-field --name commit --type string --value ${{ github.sha }} --resources resources.json
+          npx testmo automation:resources:add-field --name env --type string --value "build-${{ matrix.browser }}" --resources resources.json
 
-      - name: Subir Reportes Allure
+      - name: Subir logs por hilo
+        run: |
+          npx testmo automation:resources:add-link --name "${{ matrix.browser }}_log" --path ./logs/${{ matrix.browser }}.log --resources resources.json
+
+      - name: Comprimir Reportes Allure por hilo
+        run: |
+          cd allure-results-${{ matrix.browser }} && zip -r ../allure-results-${{ matrix.browser }}.zip . && cd ..
+
+      - name: Subir Reportes Allure por hilo
         if: always()
         uses: actions/upload-artifact@v3
         with:
-          name: allure-results
-          path: allure-results.zip
+          name: allure-results-${{ matrix.browser }}
+          path: allure-results-${{ matrix.browser }}.zip
 
   test-complete:
     needs: [test-setup, test]

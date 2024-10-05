@@ -114,20 +114,14 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Subir logs npm y pytest
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: test-logs
-          path: |
-            /home/runner/.npm/_logs/*.log
-            pytest.log
-      - name: Subir Reportes Allure
+      - name: Comprimir y subir Reportes Allure
+        run: |
+          zip -r allure-results.zip allure-results
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: allure-results
-          path: allure-results
+          path: allure-results.zip
 
   test-complete:
     needs: [test-setup, test]

@@ -12,7 +12,9 @@
 | 1   | Jean Pier Elias   | Valverde Zamora     | 2020066920  |
 | 2   | Anthony Alexander | Cano Sucso          | 2020067573  |
 ___
-
+____
+En primer lugar, se tiene que descargar la versión mas reciente donde se realiza las pruebas con docker LocalDockerTests.
+____
 ## Creacion de test y reportes usando Selenium Gird
 - Primero se crea un entorno virtual en la raíz del proyecto y luego se instala las dependencias necesarias:
 

@@ -151,17 +151,6 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      # Enviar resultados a Allure TestOps
-      - name: Enviar reportes Allure a Allure TestOps
-        run: |
-          npx allurectl upload --project-id 1 \
-          --results-dir allure-results \
-          --endpoint https://valverde.testops.cloud \
-          --token ${{ secrets.ALLURE_TOKEN }} \
-          --execution-name "Parallel Test Execution"
-        env:
-          ALLURE_TOKEN: 59329258-90ef-4de0-a584-8ce593874abc
-
   deploy:
     needs: [test, test-complete]
     runs-on: ubuntu-latest

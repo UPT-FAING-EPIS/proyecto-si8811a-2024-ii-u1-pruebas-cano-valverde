@@ -5,6 +5,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from time import sleep
+
 @allure.feature('Pruebas Equipos')
 @allure.story('Verificación de equipos y barra de navegación en la página Equipos')
 @pytest.mark.chrome
@@ -43,5 +44,8 @@ def test_verificar_equipos_y_barra_navegacion(driver):
                 menu_button.click()
                 sleep(1)
                 assert driver.current_url == url, f"No se redirigió a la página {url}"
-                driver.back()  # Volver a la página "Equipos" para continuar probando la barra
-                sleep(1)
+
+                # Volver a la página de Equipos para continuar con las pruebas
+                with allure.step("Volver a la página de Equipos"):
+                    driver.get("http://161.132.50.153/equipos")
+                    sleep(1)

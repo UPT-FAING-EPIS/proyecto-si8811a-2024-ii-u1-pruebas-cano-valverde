@@ -17,7 +17,7 @@ FACULTADES_VALIDAS = ["FAING", "FAU", "FAEDCOH", "FADE", "FACEM", "FACSA"]
 def test_filtrar_eventos_y_checkbox(driver):
     with allure.step("Abrir la página de eventos"):
         driver.get("http://161.132.50.153/eventos")
-        sleep(3)  # Esperar a que la página se cargue completamente
+        sleep(3)  
 
     facultades = [
         "Facultad de Ingeniería",
@@ -37,50 +37,45 @@ def test_filtrar_eventos_y_checkbox(driver):
                         EC.element_to_be_clickable((By.ID, "facultad"))
                     )
                     dropdown.click()
-                    sleep(2)  # Esperar a que el dropdown se despliegue
+                    sleep(2)  
 
-                    # Intentar seleccionar la opción de manera convencional
+                
                     try:
                         option = WebDriverWait(driver, 5).until(
                             EC.element_to_be_clickable((By.XPATH, f"//option[text()='{facultad_text}']"))
                         )
                         option.click()
                     except TimeoutException:
-                        # Si no se pudo seleccionar de forma convencional, forzar la selección con JavaScript
                         driver.execute_script(f"document.getElementById('facultad').value = '{facultad_text}'")
-                        sleep(2)  # Esperar a que se apliquen los cambios
+                        sleep(2)  
                         allure.attach(f"Forzado: Selección de facultad {facultad_text} con JavaScript", name="Forzado de Selección", attachment_type=allure.attachment_type.TEXT)
 
-                    sleep(2)  # Esperar a que se filtren los eventos
+                    sleep(2)  
 
-                    # Manejar el checkbox si "vigentes" es True
                     if vigentes:
                         try:
                             checkbox = WebDriverWait(driver, 5).until(
                                 EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox']"))
                             )
                             checkbox.click()
-                            sleep(2)  # Esperar a que se actualicen los eventos
+                            sleep(2)  
                         except NoSuchElementException:
                             allure.attach(f"Advertencia: Checkbox no encontrado para {facultad_text}", name="Error de Checkbox", attachment_type=allure.attachment_type.TEXT)
 
-                    # Verificar eventos filtrados
+                    
                     try:
                         eventos_filtrados = WebDriverWait(driver, 5).until(
                             EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.bg-white.p-8.rounded-lg.shadow-lg"))
                         )
                         if facultad_text == "Todas":
-                            # Si la opción seleccionada es "Todas", verificar que se muestren eventos
                             assert len(eventos_filtrados) > 0, "No se encontraron eventos."
                         else:
                             if len(eventos_filtrados) == 0:
-                                # Verificar el mensaje de no disponibilidad si no hay eventos
                                 no_events_message = WebDriverWait(driver, 5).until(
                                     EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'No hay eventos disponibles en este momento.')]"))
                                 )
                                 assert no_events_message is not None, "No se encontró mensaje de eventos no disponibles."
                             else:
-                                # Verificar que los eventos filtrados correspondan a la facultad seleccionada
                                 for evento in eventos_filtrados:
                                     try:
                                         facultad_element = evento.find_element(By.XPATH, ".//p[contains(text(), 'Facultad')]")

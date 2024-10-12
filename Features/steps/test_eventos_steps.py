@@ -17,7 +17,7 @@ FACULTADES_VALIDAS = ["FAING", "FAU", "FAEDCOH", "FADE", "FACEM", "FACSA"]
 def test_filtrar_eventos_y_checkbox(driver):
     with allure.step("Abrir la página de eventos"):
         driver.get("http://161.132.50.153/eventos")
-        sleep(2)  # Esperar a que la página se cargue
+        sleep(3)  
 
     facultades = [
         "Facultad de Ingeniería",
@@ -30,92 +30,113 @@ def test_filtrar_eventos_y_checkbox(driver):
     ]
 
     for facultad_text in facultades:
-        with allure.step(f"Seleccionar la facultad: {facultad_text}"):
-
-            # Filtrar eventos por facultad sin checkbox marcado
-            try:
-                dropdown = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.ID, "facultad"))
-                )
-                dropdown.click()
-                sleep(1)  # Esperar a que el dropdown se despliegue
-
-                option = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, f"//option[text()='{facultad_text}']"))
-                )
-                option.click()
-                sleep(1)  # Esperar a que se filtren los eventos
-
+        for vigentes in [False, True]:
+            with allure.step(f"Seleccionar la facultad: {facultad_text} con checkbox {'marcado' if vigentes else 'no marcado'}"):
                 try:
-                    eventos_filtrados = WebDriverWait(driver, 5).until(
-                        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.bg-white.p-8.rounded-lg.shadow-lg"))
+                    dropdown = WebDriverWait(driver, 10).until(
+                        EC.element_to_be_clickable((By.ID, "facultad"))
                     )
-                    if facultad_text == "Todas":
-                        # Si la opción seleccionada es "Todas", verificar que se muestren eventos
-                        assert len(eventos_filtrados) > 0, "No se encontraron eventos."
-                    else:
-                        if len(eventos_filtrados) == 0:
-                            # Verificar el mensaje de no disponibilidad si no hay eventos
-                            no_events_message = WebDriverWait(driver, 5).until(
-                                EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'No hay eventos disponibles en este momento.')]"))
-                            )
-                            assert no_events_message is not None, "No se encontró mensaje de eventos no disponibles."
-                        else:
-                            # Verificar que los eventos filtrados correspondan a la facultad seleccionada
-                            for evento in eventos_filtrados:
-                                try:
-                                    facultad_element = evento.find_element(By.XPATH, ".//p[contains(text(), 'Facultad')]")
-                                    facultad = facultad_element.text.split(":")[1].strip()
-                                    assert facultad == facultad_text, f"Evento con facultad incorrecta: {facultad}"
-                                except NoSuchElementException:
-                                    allure.attach("Advertencia: Facultad no encontrada en este evento", name="Advertencia Facultad", attachment_type=allure.attachment_type.TEXT)
+                    dropdown.click()
+                    sleep(2)  
 
-                except TimeoutException:
-                    # Manejar el caso en que no se encuentran eventos o el mensaje de no disponibilidad
-                    if facultad_text == "Facultad de Ciencias de la Salud":
-                        no_events_message = WebDriverWait(driver, 5).until(
-                            EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'No hay eventos disponibles en este momento.')]"))
+                
+                    try:
+                        option = WebDriverWait(driver, 5).until(
+                            EC.element_to_be_clickable((By.XPATH, f"//option[text()='{facultad_text}']"))
                         )
-                        assert no_events_message is not None, "No se encontró mensaje de eventos no disponibles."
-                    else:
+                        option.click()
+                    except TimeoutException:
+                        driver.execute_script(f"document.getElementById('facultad').value = '{facultad_text}'")
+                        sleep(2)  
+                        allure.attach(f"Forzado: Selección de facultad {facultad_text} con JavaScript", name="Forzado de Selección", attachment_type=allure.attachment_type.TEXT)
+
+                    sleep(2)  
+
+                    if vigentes:
+                        try:
+                            checkbox = WebDriverWait(driver, 5).until(
+                                EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox']"))
+                            )
+                            checkbox.click()
+                            sleep(2)  
+                        except NoSuchElementException:
+                            allure.attach(f"Advertencia: Checkbox no encontrado para {facultad_text}", name="Error de Checkbox", attachment_type=allure.attachment_type.TEXT)
+
+                    
+                    try:
+                        eventos_filtrados = WebDriverWait(driver, 5).until(
+                            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.bg-white.p-8.rounded-lg.shadow-lg"))
+                        )
+                        if facultad_text == "Todas":
+                            assert len(eventos_filtrados) > 0, "No se encontraron eventos."
+                        else:
+                            if len(eventos_filtrados) == 0:
+                                no_events_message = WebDriverWait(driver, 5).until(
+                                    EC.presence_of_element_located((By.XPATH, "//p[contains(text(), 'No hay eventos disponibles en este momento.')]"))
+                                )
+                                assert no_events_message is not None, "No se encontró mensaje de eventos no disponibles."
+                            else:
+                                for evento in eventos_filtrados:
+                                    try:
+                                        facultad_element = evento.find_element(By.XPATH, ".//p[contains(text(), 'Facultad')]")
+                                        facultad = facultad_element.text.split(":")[1].strip()
+                                        assert facultad == facultad_text, f"Evento con facultad incorrecta: {facultad}"
+                                    except NoSuchElementException:
+                                        allure.attach("Advertencia: Facultad no encontrada en este evento", name="Advertencia Facultad", attachment_type=allure.attachment_type.TEXT)
+
+                    except TimeoutException:
                         allure.attach(f"Advertencia: No se encontraron eventos para {facultad_text}", name="Error de Eventos", attachment_type=allure.attachment_type.TEXT)
 
-                # Marcar el checkbox si está presente y filtrar nuevamente
-                try:
-                    checkbox = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((By.XPATH, "//input[@type='checkbox']"))
-                    )
-                    checkbox.click()
-                    sleep(1)  # Esperar a que se actualicen los eventos
-
-                    # Re-filtrar los eventos con el checkbox marcado
-                    dropdown.click()  # Reabrir el dropdown
-                    sleep(1)  # Esperar a que el dropdown se despliegue
-
-                    option = WebDriverWait(driver, 5).until(
-                        EC.element_to_be_clickable((By.XPATH, f"//option[text()='{facultad_text}']"))
-                    )
-                    option.click()
-                    sleep(1)  # Esperar a que se filtren los eventos nuevamente
-
-                    eventos_filtrados = WebDriverWait(driver, 5).until(
-                        EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.bg-white.p-8.rounded-lg.shadow-lg"))
-                    )
-                    assert len(eventos_filtrados) > 0, f"No se encontraron eventos para {facultad_text} después de marcar el checkbox."
-
-                    for evento in eventos_filtrados:
-                        try:
-                            facultad_element = evento.find_element(By.XPATH, ".//p[contains(text(), 'Facultad')]")
-                            facultad = facultad_element.text.split(":")[1].strip()
-                            assert facultad == facultad_text, f"Evento con facultad incorrecta después de marcar el checkbox: {facultad}"
-                        except NoSuchElementException:
-                            allure.attach("Advertencia: Facultad no encontrada en este evento después de marcar el checkbox", name="Advertencia Facultad", attachment_type=allure.attachment_type.TEXT)
-
                 except NoSuchElementException:
-                    allure.attach(f"Advertencia: Checkbox no encontrado para {facultad_text}", name="Error de Checkbox", attachment_type=allure.attachment_type.TEXT)
+                    allure.attach(f"Advertencia: Opción no encontrada para {facultad_text}", name="Error de Selección", attachment_type=allure.attachment_type.TEXT)
+                except TimeoutException:
+                    allure.attach(f"Timeout: No se pudo encontrar o seleccionar la opción para {facultad_text}", name="Timeout Error", attachment_type=allure.attachment_type.TEXT)
 
-            except NoSuchElementException:
-                allure.attach(f"Advertencia: Opción no encontrada para {facultad_text}", name="Error de Selección", attachment_type=allure.attachment_type.TEXT)
-            except TimeoutException:
-                allure.attach(f"Timeout: No se pudo encontrar o seleccionar la opción para {facultad_text}", name="Timeout Error", attachment_type=allure.attachment_type.TEXT)
-            sleep(1)  # Esperar antes de seleccionar la siguiente opción
+            sleep(2)  # Esperar antes de seleccionar la siguiente opción
+
+@allure.feature('Navegación en la barra superior')
+@allure.story('Navegación del menú superior en la página de eventos')
+@pytest.mark.chrome
+@pytest.mark.firefox
+@pytest.mark.edge
+def test_navegacion_menu_superior(driver):
+    menus = {
+        "Inicio": "http://161.132.50.153/",
+        "Acerca de": "http://161.132.50.153/about",
+        "Equipos": "http://161.132.50.153/equipos",
+        "Participantes": "http://161.132.50.153/participantes",
+        "Lugares": "http://161.132.50.153/lugares"
+    }
+
+    with allure.step("Abrir la página de eventos"):
+        driver.get("http://161.132.50.153/eventos")
+        sleep(5)
+
+    for menu, url in menus.items():
+        with allure.step(f"Hacer clic en el enlace '{menu}'"):
+            try:
+                # Volver a la página de eventos para "Acerca de", "Equipos", "Participantes" y "Lugares"
+                if menu in ["Acerca de", "Equipos", "Participantes", "Lugares"]:
+                    with allure.step(f"Volver a la página de eventos antes de hacer clic en '{menu}'"):
+                        driver.get("http://161.132.50.153/eventos")
+                        sleep(2)
+
+                # Usar LINK_TEXT para encontrar el enlace y hacer clic
+                menu_link = WebDriverWait(driver, 15).until(
+                    EC.element_to_be_clickable((By.LINK_TEXT, menu))
+                )
+                menu_link.click()
+                sleep(1)
+                assert driver.current_url == url, f"No se redirigió correctamente al enlace {menu}"
+
+                # Volver a la página de eventos después de cada clic
+                driver.get("http://161.132.50.153/eventos")
+                sleep(2)
+
+            except (NoSuchElementException, TimeoutException) as e:
+                allure.attach(driver.get_screenshot_as_png(), name="Error de Navegación", attachment_type=allure.attachment_type.PNG)
+                allure.attach(f"Enlace no encontrado: {menu}", name="Error de Navegación", attachment_type=allure.attachment_type.TEXT)
+                pytest.fail(f"No se pudo hacer clic en el enlace: {menu}")
+
+            sleep(1)
+

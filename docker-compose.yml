@@ -1,6 +1,7 @@
+version: "3"
 services:
   selenium-hub:
-    image: greenvalve/selenium_testmo:selenium-hub
+    image: selenium/hub:4.25.0-20240922
     container_name: selenium-hub
     ports:
       - "4442:4442"
@@ -10,7 +11,7 @@ services:
       - selenium-grid
 
   chrome:
-    image: greenvalve/selenium_testmo:node-chrome
+    image: selenium/node-chrome:4.25.0-20240922
     container_name: chrome
     shm_size: 2gb
     depends_on:
@@ -19,11 +20,12 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=3
     networks:
       - selenium-grid
 
   firefox:
-    image: greenvalve/selenium_testmo:node-firefox
+    image: selenium/node-firefox:4.25.0-20240922
     container_name: firefox
     shm_size: 2gb
     depends_on:
@@ -32,11 +34,12 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=3
     networks:
       - selenium-grid
 
   edge:
-    image: greenvalve/selenium_testmo:node-edge
+    image: selenium/node-edge:4.25.0-20240922
     container_name: edge
     shm_size: 2gb
     depends_on:
@@ -45,11 +48,12 @@ services:
       - SE_EVENT_BUS_HOST=selenium-hub
       - SE_EVENT_BUS_PUBLISH_PORT=4442
       - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=3
     networks:
       - selenium-grid
 
   chrome_video:
-    image: greenvalve/selenium_testmo:video-node-chrome
+    image: selenium/video:ffmpeg-7.0.2-20240922
     container_name: chrome_video
     volumes:
       - ./videos:/videos
@@ -64,7 +68,7 @@ services:
       - selenium-grid
 
   edge_video:
-    image: greenvalve/selenium_testmo:video-node-edge
+    image: selenium/video:ffmpeg-7.0.2-20240922
     container_name: edge_video
     volumes:
       - ./videos:/videos
@@ -79,7 +83,7 @@ services:
       - selenium-grid
 
   firefox_video:
-    image: greenvalve/selenium_testmo:video-node-firefox
+    image: selenium/video:ffmpeg-7.0.2-20240922
     container_name: firefox_video
     volumes:
       - ./videos:/videos

@@ -1,88 +1,94 @@
-Feature: Visualización y filtrado de eventos destacados en la página principal
+Feature: Pruebas de redirección y funcionamiento en la página principal de Juegos Florales 2024
 
   @chrome
-  Scenario: El usuario puede ver los eventos destacados al ingresar a la página principal en Chrome
+  Scenario: El usuario puede redirigirse a la página de Eventos en Chrome
     Given I am on the "Home" page
-    Then I should see the list of featured events displayed automatically
-    And each event should have a valid faculty or display a warning if the faculty is invalid
+    When I click on the "Entérate de los Eventos" button
+    Then I should be redirected to "http://161.132.50.153/eventos"
 
   @firefox
-  Scenario: El usuario puede ver los eventos destacados al ingresar a la página principal en Firefox
+  Scenario: El usuario puede redirigirse a la página de Eventos en Firefox
     Given I am on the "Home" page
-    Then I should see the list of featured events displayed automatically
-    And each event should have a valid faculty or display a warning if the faculty is invalid
+    When I click on the "Entérate de los Eventos" button
+    Then I should be redirected to "http://161.132.50.153/eventos"
 
   @edge
-  Scenario: El usuario puede ver los eventos destacados al ingresar a la página principal en Edge
+  Scenario: El usuario puede redirigirse a la página de Eventos en Edge
     Given I am on the "Home" page
-    Then I should see the list of featured events displayed automatically
-    And each event should have a valid faculty or display a warning if the faculty is invalid
+    When I click on the "Entérate de los Eventos" button
+    Then I should be redirected to "http://161.132.50.153/eventos"
 
   @chrome
-  Scenario Outline: El usuario puede filtrar eventos destacados por "<faculty>" en Chrome
+  Scenario: El usuario puede redirigirse a la página de Ubicaciones en Chrome
     Given I am on the "Home" page
-    When I select the "<faculty>" from the filter dropdown on the Home page
-    Then I should see featured events filtered by "<faculty>"
-    And each event should have a valid faculty or display a warning if the faculty is invalid
-
-    Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
+    When I click on the "Conoce las Ubicaciones" button
+    Then I should be redirected to "http://161.132.50.153/lugares"
 
   @firefox
-  Scenario Outline: El usuario puede filtrar eventos destacados por "<faculty>" en Firefox
+  Scenario: El usuario puede redirigirse a la página de Ubicaciones en Firefox
     Given I am on the "Home" page
-    When I select the "<faculty>" from the filter dropdown on the Home page
-    Then I should see featured events filtered by "<faculty>"
-    And each event should have a valid faculty or display a warning if the faculty is invalid
-
-    Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
+    When I click on the "Conoce las Ubicaciones" button
+    Then I should be redirected to "http://161.132.50.153/lugares"
 
   @edge
-  Scenario Outline: El usuario puede filtrar eventos destacados por "<faculty>" en Edge
+  Scenario: El usuario puede redirigirse a la página de Ubicaciones en Edge
     Given I am on the "Home" page
-    When I select the "<faculty>" from the filter dropdown on the Home page
-    Then I should see featured events filtered by "<faculty>"
-    And each event should have a valid faculty or display a warning if the faculty is invalid
-
-    Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
+    When I click on the "Conoce las Ubicaciones" button
+    Then I should be redirected to "http://161.132.50.153/lugares"
 
   @chrome
-  Scenario: No hay eventos disponibles para una facultad seleccionada en la página principal en Chrome
+  Scenario: El usuario puede redirigirse a la página de Facebook en Chrome
     Given I am on the "Home" page
-    When I select the "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento." on the Home page
+    When I click on the "Bienestar Universitario UPT" link
+    Then I should be redirected to "https://www.facebook.com/ObunUPT/"
 
   @firefox
-  Scenario: No hay eventos disponibles para una facultad seleccionada en la página principal en Firefox
+  Scenario: El usuario puede redirigirse a la página de Facebook en Firefox
     Given I am on the "Home" page
-    When I select the "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento." on the Home page
+    When I click on the "Bienestar Universitario UPT" link
+    Then I should be redirected to "https://www.facebook.com/ObunUPT/"
 
   @edge
-  Scenario: No hay eventos disponibles para una facultad seleccionada en la página principal en Edge
+  Scenario: El usuario puede redirigirse a la página de Facebook en Edge
     Given I am on the "Home" page
-    When I select the "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento." on the Home page
+    When I click on the "Bienestar Universitario UPT" link
+    Then I should be redirected to "https://www.facebook.com/ObunUPT/"
+
+  @chrome
+  Scenario Outline: El usuario puede navegar a diferentes secciones desde el menú superior en Chrome
+    Given I am on the "Home" page
+    When I click on the "<menu>" button
+    Then I should be redirected to the "<url>"
+
+    Examples:
+      | menu      | url                              |
+      | Acerca de | http://161.132.50.153/about       |
+      | Eventos   | http://161.132.50.153/eventos     |
+      | Equipos   | http://161.132.50.153/equipos     |
+      | Lugares   | http://161.132.50.153/lugares     |
+
+  @firefox
+  Scenario Outline: El usuario puede navegar a diferentes secciones desde el menú superior en Firefox
+    Given I am on the "Home" page
+    When I click on the "<menu>" button
+    Then I should be redirected to the "<url>"
+
+    Examples:
+      | menu      | url                              |
+      | Acerca de | http://161.132.50.153/about       |
+      | Eventos   | http://161.132.50.153/eventos     |
+      | Equipos   | http://161.132.50.153/equipos     |
+      | Lugares   | http://161.132.50.153/lugares     |
+
+  @edge
+  Scenario Outline: El usuario puede navegar a diferentes secciones desde el menú superior en Edge
+    Given I am on the "Home" page
+    When I click on the "<menu>" button
+    Then I should be redirected to the "<url>"
+
+    Examples:
+      | menu      | url                              |
+      | Acerca de | http://161.132.50.153/about       |
+      | Eventos   | http://161.132.50.153/eventos     |
+      | Equipos   | http://161.132.50.153/equipos     |
+      | Lugares   | http://161.132.50.153/lugares     |

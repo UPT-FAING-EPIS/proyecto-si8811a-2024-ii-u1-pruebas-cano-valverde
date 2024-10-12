@@ -1,13 +1,12 @@
 import pytest
-from webdriver_config import get_driver  # Asegúrate de que la importación esté correcta
+from webdriver_config import get_driver
 
-@pytest.fixture(scope="session")
+# Fixture para parametrizar el navegador
+@pytest.fixture(scope="session", params=["chrome", "firefox", "edge"])
 def driver(request):
-    browser = request.config.getoption("browser")
+    browser = request.param  # Usamos request.param para obtener el navegador actual
     driver = get_driver(browser)
     driver.maximize_window()
     yield driver
     driver.quit()
 
-def pytest_addoption(parser):
-    parser.addoption("--browser", action="store", default="chrome", help="Browser to run tests on")

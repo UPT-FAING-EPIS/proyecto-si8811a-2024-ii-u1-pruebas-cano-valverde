@@ -1,88 +1,40 @@
-Feature: Visualización de eventos en la página de eventos
+Feature: Pruebas de filtrado y navegación en la página de eventos de Juegos Florales 2024
 
-  @chrome
-  Scenario: El usuario puede ver los eventos después de filtrar en la página de eventos en Chrome
+  @chrome @firefox @edge
+  Scenario Outline: El usuario puede redirigirse a las secciones del menú superior
     Given I am on the "Eventos" page
-    When I select "Facultad de Ingeniería" from the filter dropdown
-    Then I should see a list of events displayed
-    And each event should have a valid faculty
-
-  @firefox
-  Scenario: El usuario puede ver los eventos después de filtrar en la página de eventos en Firefox
-    Given I am on the "Eventos" page
-    When I select "Facultad de Ingeniería" from the filter dropdown
-    Then I should see a list of events displayed
-    And each event should have a valid faculty
-
-  @edge
-  Scenario: El usuario puede ver los eventos después de filtrar en la página de eventos en Edge
-    Given I am on the "Eventos" page
-    When I select "Facultad de Ingeniería" from the filter dropdown
-    Then I should see a list of events displayed
-    And each event should have a valid faculty
-
-  @chrome
-  Scenario Outline: El usuario puede filtrar eventos por "<faculty>" en Chrome
-    Given I am on the "Eventos" page
-    When I select "<faculty>" from the filter dropdown
-    Then I should see events filtered by "<faculty>"
+    When I click on the "<menu>" link
+    Then I should be redirected to "<url>"
 
     Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
+      | menu          | url                                    |
+      | Inicio        | http://161.132.50.153                  |
+      | Acerca de     | http://161.132.50.153/about            |
+      | Equipos       | http://161.132.50.153/equipos          |
+      | Participantes | http://161.132.50.153/participantes    |
+      | Lugares       | http://161.132.50.153/lugares          |
 
-  @firefox
-  Scenario Outline: El usuario puede filtrar eventos por "<faculty>" en Firefox
+  @chrome @firefox @edge
+  Scenario Outline: El usuario puede filtrar eventos por facultad con y sin checkbox marcado
     Given I am on the "Eventos" page
-    When I select "<faculty>" from the filter dropdown
-    Then I should see events filtered by "<faculty>"
+    When I select "<faculty>" from the faculty filter dropdown
+    And I mark the "Mostrar solo eventos vigentes" checkbox
+    Then I should see events filtered by "<faculty>" or the message "No hay eventos disponibles en este momento."
 
     Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
+      | faculty                                                 | vigentes |
+      | Facultad de Ingeniería                                  | False    |
+      | Facultad de Ingeniería                                  | True     |
+      | Facultad de Educación, Ciencias de la Comunicación       | False    |
+      | Facultad de Educación, Ciencias de la Comunicación       | True     |
+      | Facultad de Derecho y Ciencias Políticas                | False    |
+      | Facultad de Derecho y Ciencias Políticas                | True     |
+      | Facultad de Ciencias de la Salud                        | False    |
+      | Facultad de Ciencias de la Salud                        | True     |
+      | Facultad de Ciencias Empresariales                      | False    |
+      | Facultad de Ciencias Empresariales                      | True     |
+      | Facultad de Arquitectura y Urbanismo                    | False    |
+      | Facultad de Arquitectura y Urbanismo                    | True     |
+      | Todas                                                   | False    |
+      | Todas                                                   | True     |
 
-  @edge
-  Scenario Outline: El usuario puede filtrar eventos por "<faculty>" en Edge
-    Given I am on the "Eventos" page
-    When I select "<faculty>" from the filter dropdown
-    Then I should see events filtered by "<faculty>"
-
-    Examples:
-      | faculty                                                                      |
-      | Facultad de Ingeniería                                                       |
-      | Facultad de Educación, Ciencias de la Comunicación y Humanidades             |
-      | Facultad de Derecho y Ciencias Políticas                                     |
-      | Facultad de Ciencias de la Salud                                             |
-      | Facultad de Ciencias Empresariales                                           |
-      | Facultad de Arquitectura y Urbanismo                                         |
-      | Todas                                                                        |
-
-  @chrome
-  Scenario: No hay eventos disponibles para una facultad seleccionada en Chrome
-    Given I am on the "Eventos" page
-    When I select "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento."
-
-  @firefox
-  Scenario: No hay eventos disponibles para una facultad seleccionada en Firefox
-    Given I am on the "Eventos" page
-    When I select "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento."
-
-  @edge
-  Scenario: No hay eventos disponibles para una facultad seleccionada en Edge
-    Given I am on the "Eventos" page
-    When I select "Facultad de Ciencias de la Salud" from the filter dropdown
-    Then I should see a message that says "No hay eventos disponibles en este momento."

@@ -15,7 +15,12 @@
 ___
 
 ## Creacion de test y reportes usando Selenium Gird
+- Primero se crea un entorno virtual en la raíz del proyecto y luego se instala las dependencias necesarias:
 
+```python
+myenv\Scripts\activate
+```
+  
 ### Instalar pytest :
 
 ```python
@@ -33,15 +38,10 @@ pip install selenium
 ```python
 pip install pytest-selenium
 ```
-### Instalar allure-pytest
+### Instalar pytest-xdist
+
 ```python
-pip install allure-pytest
-```
-### Codigo para correr las pruebas para cada navegador:
-```python
-pytest --browser=chrome --alluredir=./allure-results
-pytest --browser=edge --alluredir=./allure-results
-pytest --browser=firefox --alluredir=./allure-results
+pip install pytest-xdist
 ```
 ### Codigo para correr las pruebas en paralelo:
 ```python

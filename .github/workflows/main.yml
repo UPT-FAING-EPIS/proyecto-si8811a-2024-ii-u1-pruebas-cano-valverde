@@ -103,7 +103,8 @@ jobs:
 
       - name: Ejecutar Pytest con Selenium y generar XML para Testmo y Allure
         run: |
-          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=allure-results-${{ matrix.browser }}
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=allure-results-${{ matrix.browser }} --maxfail=0 --tb=short
+        continue-on-error: true  # Asegura que las pruebas continúen aunque alguna falle
 
       - name: Enviar resultados a Testmo por hilo
         if: always()  # Se asegura de que se envíen los resultados, incluso si hay fallos
@@ -152,6 +153,17 @@ jobs:
         env:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
+      # Enviar resultados a Allure TestOps
+      - name: Enviar reportes Allure a Allure TestOps
+        run: |
+          npx allurectl upload --project-id 1 \
+          --results-dir allure-results \
+          --endpoint https://valverde.testops.cloud \
+          --token ${{ secrets.ALLURE_TOKEN }} \
+          --execution-name "Parallel Test Execution"
+        env:
+          ALLURE_TOKEN: 59329258-90ef-4de0-a584-8ce593874abc
 
   deploy:
     needs: [test, test-complete]

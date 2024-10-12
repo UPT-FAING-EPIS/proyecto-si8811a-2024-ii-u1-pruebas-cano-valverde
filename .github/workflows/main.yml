@@ -39,7 +39,7 @@ jobs:
             --project-id 1 \
             --name "Parallel Pytest Test Run" \
             --resources resources.json \
-            --source "unit-tests" > testmo-run-id.txt
+            --source "pruebas-cano-valverde" > testmo-run-id.txt
           ID=$(cat testmo-run-id.txt)
           echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
         env:
@@ -101,9 +101,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install pytest pytest-selenium allure-pytest
 
-      - name: Ejecutar Pytest con Selenium y generar XML para Testmo
+      - name: Ejecutar Pytest con Selenium y generar XML para Testmo y Allure
         run: |
-          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=./allure-results-${{ matrix.browser }}
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=allure-results-${{ matrix.browser }}
 
       - name: Enviar resultados a Testmo por hilo
         if: always()  # Se asegura de que se envíen los resultados, incluso si hay fallos
@@ -121,10 +121,6 @@ jobs:
           npx testmo automation:resources:add-field --name browser --type string --value ${{ matrix.browser }} --resources resources.json
           npx testmo automation:resources:add-field --name commit --type string --value ${{ github.sha }} --resources resources.json
           npx testmo automation:resources:add-field --name env --type string --value "build-${{ matrix.browser }}" --resources resources.json
-
-      - name: Subir logs por hilo
-        run: |
-          npx testmo automation:resources:add-link --name "${{ matrix.browser }}_log" --url "https://valgreenupt.testmo.net/automation/runs/1" --resources resources.json
 
       - name: Comprimir Reportes Allure por hilo
         run: |

@@ -1,8 +1,27 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/vK6WBQ1t)
 [![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=15560930)
 
-# Creacion de test y reportes usando Selenium Gird
+# UNIVERSIDAD PRIVADA DE TACNA
+## Facultad de Ingeniería
+## Escuela profesional de Ingeniería de Sistemas
+![Logo de upt](https://net.upt.edu.pe/tdv/assets/dist/img/logo_upt_2024.png)
+### Proyecto: Juegos Florales
+### Pruebas de Aceptación/Interfaz
 
+### Integrantes:
+| ID  | Nombres           | Apellidos           | Código      |
+| --- | ----------------- | ------------------- | ----------- |
+| 1   | Jean Pier Elias   | Valverde Zamora     | 2020066920  |
+| 2   | Anthony Alexander | Cano Sucso          | 2020067573  |
+___
+
+## Creacion de test y reportes usando Selenium Gird
+- Primero se crea un entorno virtual en la raíz del proyecto y luego se instala las dependencias necesarias:
+
+```python
+myenv\Scripts\activate
+```
+  
 ### Instalar pytest :
 
 ```python
@@ -20,15 +39,10 @@ pip install selenium
 ```python
 pip install pytest-selenium
 ```
-### Instalar allure-pytest
+### Instalar pytest-xdist
+
 ```python
-pip install allure-pytest
-```
-### Codigo para correr las pruebas para cada navegador:
-```python
-pytest --browser=chrome --alluredir=./allure-results
-pytest --browser=edge --alluredir=./allure-results
-pytest --browser=firefox --alluredir=./allure-results
+pip install pytest-xdist
 ```
 ### Codigo para correr las pruebas en paralelo:
 ```python

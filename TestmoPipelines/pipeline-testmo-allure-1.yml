@@ -1,0 +1,172 @@
+name: Build and Test
+
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: echo "Building .."
+
+  test-setup:
+    needs: build
+    runs-on: ubuntu-latest
+    outputs:
+      testmo-run-id: ${{ steps.run-tests.outputs.testmo-run-id }}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-selenium allure-pytest
+      - name: Instalar Testmo CLI versión 1.4.2
+        run: |
+          npm install -g @testmo/testmo-cli@1.4.2
+          echo "PATH=$(npm root -g)/.bin:$PATH" >> $GITHUB_ENV
+      - name: Verificar instalación de Testmo CLI
+        run: npx testmo --version
+      - run: |
+          npx testmo automation:resources:add-field --name git --type string --value ${GITHUB_SHA:0:7} --resources resources.json
+          RUN_URL="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          npx testmo automation:resources:add-link --name build --url $RUN_URL --resources resources.json
+      - run: |
+          npx testmo automation:run:create \
+            --instance "$TESTMO_URL" \
+            --project-id 1 \
+            --name "Parallel Pytest Test Run" \
+            --resources resources.json \
+            --source "pruebas-cano-valverde" > testmo-run-id.txt
+          ID=$(cat testmo-run-id.txt)
+          echo "testmo-run-id=$ID" >> $GITHUB_OUTPUT
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+        id: run-tests
+
+  test:
+    needs: test-setup
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox, edge]
+
+    services:
+      selenium:
+        image: selenium/hub:4.25.0
+        ports:
+          - 4444:4444
+      chrome:
+        image: selenium/node-chrome:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      firefox:
+        image: selenium/node-firefox:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+      edge:
+        image: selenium/node-edge:4.25.0
+        env:
+          SE_EVENT_BUS_HOST: selenium
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Instalar Testmo CLI versión 1.4.2
+        run: npm install -g @testmo/testmo-cli@1.4.2
+
+      - name: Verificar instalación de Testmo CLI
+        run: npx testmo --version
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+      - run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-selenium allure-pytest
+
+      - name: Ejecutar Pytest con Selenium y generar XML para Testmo y Allure
+        run: |
+          pytest --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=allure-results-${{ matrix.browser }} --maxfail=0 --tb=short
+        continue-on-error: true  # Asegura que las pruebas continúen aunque alguna falle
+
+      - name: Enviar resultados a Testmo por hilo
+        if: always()  # Se asegura de que se envíen los resultados, incluso si hay fallos
+        run: |
+          npx testmo automation:run:submit-thread \
+            --instance "$TESTMO_URL" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
+            --results pytest-results-${{ matrix.browser }}.xml
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
+      - name: Agregar detalles personalizados por hilo
+        run: |
+          npx testmo automation:resources:add-field --name browser --type string --value ${{ matrix.browser }} --resources resources.json
+          npx testmo automation:resources:add-field --name commit --type string --value ${{ github.sha }} --resources resources.json
+          npx testmo automation:resources:add-field --name env --type string --value "build-${{ matrix.browser }}" --resources resources.json
+
+      - name: Comprimir Reportes Allure por hilo
+        run: |
+          cd allure-results-${{ matrix.browser }} && zip -r ../allure-results-${{ matrix.browser }}.zip . && cd ..
+
+      - name: Subir Reportes Allure por hilo
+        if: always()  # Asegura la subida de los reportes aunque las pruebas fallen
+        uses: actions/upload-artifact@v3
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: allure-results-${{ matrix.browser }}.zip
+
+  test-complete:
+    needs: [test-setup, test]
+    if: always()  # Asegura que esta etapa se ejecute aunque las pruebas fallen
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: |
+          npx testmo automation:run:complete \
+            --instance "$TESTMO_URL" \
+            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}"
+        env:
+          TESTMO_URL: ${{ secrets.TESTMO_URL }}
+          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
+
+      # Enviar resultados a Allure TestOps
+      - name: Enviar reportes Allure a Allure TestOps
+        run: |
+          npx allurectl upload --project-id 1 \
+          --results-dir allure-results \
+          --endpoint https://valverde.testops.cloud \
+          --token ${{ secrets.ALLURE_TOKEN }} \
+          --execution-name "Parallel Test Execution"
+        env:
+          ALLURE_TOKEN: 59329258-90ef-4de0-a584-8ce593874abc
+
+  deploy:
+    needs: [test, test-complete]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploying .."

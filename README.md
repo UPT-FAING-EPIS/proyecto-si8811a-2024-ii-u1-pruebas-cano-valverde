@@ -4,6 +4,7 @@
 # UNIVERSIDAD PRIVADA DE TACNA
 ## Facultad de Ingeniería
 ## Escuela profesional de Ingeniería de Sistemas
+![Logo de upt](https://net.upt.edu.pe/tdv/assets/dist/img/logo_upt_2024.png)
 ### Proyecto: Juegos Florales
 ### Pruebas de Aceptación/Interfaz
 

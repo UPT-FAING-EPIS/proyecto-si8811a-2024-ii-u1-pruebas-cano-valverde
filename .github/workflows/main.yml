@@ -103,10 +103,10 @@ jobs:
       - name: Ejecutar Pytest con Selenium y generar XML para Testmo y Allure
         run: |
           pytest -n 3 --driver Remote --capability browserName ${{ matrix.browser }} --capability version latest --junitxml=pytest-results-${{ matrix.browser }}.xml --alluredir=allure-results-${{ matrix.browser }} --maxfail=0 --tb=short
-        continue-on-error: true  # Asegura que las pruebas continúen aunque alguna falle
+        continue-on-error: true
 
       - name: Enviar resultados a Testmo por hilo
-        if: always()  # Se asegura de que se envíen los resultados, incluso si hay fallos
+        if: always()
         run: |
           npx testmo automation:run:submit-thread \
             --instance "$TESTMO_URL" \
@@ -116,16 +116,11 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Agregar detalles personalizados por hilo
-        run: |
-          npx testmo automation:resources:add-field --name browser --type string --value ${{ matrix.browser }} --resources resources.json
-          npx testmo automation:resources:add-field --name commit --type string --value ${{ github.sha }} --resources resources.json
-          npx testmo automation:resources:add-field --name env --type string --value "build-${{ matrix.browser }}" --resources resources.json
       - name: Comprimir Reportes Allure por hilo
         run: |
           cd allure-results-${{ matrix.browser }} && zip -r ../allure-results-${{ matrix.browser }}.zip . && cd ..
       - name: Subir Reportes Allure por hilo
-        if: always()  # Asegura la subida de los reportes aunque las pruebas fallen
+        if: always()
         uses: actions/upload-artifact@v3
         with:
           name: allure-results-${{ matrix.browser }}
@@ -133,7 +128,7 @@ jobs:
 
   test-complete:
     needs: [test-setup, test]
-    if: always()  # Asegura que esta etapa se ejecute aunque las pruebas fallen
+    if: always()
     runs-on: ubuntu-latest
 
     steps:

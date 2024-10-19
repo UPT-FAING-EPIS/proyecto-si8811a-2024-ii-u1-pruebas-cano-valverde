@@ -15,7 +15,7 @@
 | 2   | Anthony Alexander | Cano Sucso          | 2020067573  |
 ___
 
-## Creacion de test y reportes usando Selenium Gird
+## Creacion de test y reportes usando Selenium Grid
 - Primero se crea un entorno virtual en la raíz del proyecto y luego se instala las dependencias necesarias:
 
 ```python

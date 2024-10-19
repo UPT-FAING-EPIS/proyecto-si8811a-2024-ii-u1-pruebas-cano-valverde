@@ -124,22 +124,12 @@ jobs:
           TESTMO_URL: ${{ secrets.TESTMO_URL }}
           TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
-      - name: Subir videos de Selenium
+      - name: Subir videos como artefactos
         if: always()
         uses: actions/upload-artifact@v3
         with:
           name: selenium-videos-${{ matrix.browser }}
           path: ./videos
-
-      - name: Subir videos a Testmo
-        run: |
-          npx testmo automation:run:add-attachment \
-            --instance "$TESTMO_URL" \
-            --run-id "${{ needs.test-setup.outputs.testmo-run-id }}" \
-            --file ./videos/video-${{ matrix.browser }}.mp4
-        env:
-          TESTMO_URL: ${{ secrets.TESTMO_URL }}
-          TESTMO_TOKEN: ${{ secrets.TESTMO_TOKEN }}
 
       - name: Comprimir Reportes Allure por hilo
         run: |

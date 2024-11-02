@@ -7,14 +7,11 @@ WORKDIR /app
 # Copia el archivo de dependencias a la imagen
 COPY requirements.txt .
 
-# Instala las dependencias
+# Instala las dependencias de Python
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el código fuente de la aplicación en el contenedor
+# Copia el código fuente de pruebas en el contenedor
 COPY . .
 
-# Expone el puerto en el que correrá la aplicación
-EXPOSE 8000
-
-# Comando para ejecutar la aplicación
-CMD ["python", "app.py"]
+# Comando por defecto para ejecutar los tests
+CMD ["pytest", "--maxfail=1", "--disable-warnings", "-v"]

@@ -8,7 +8,8 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Instala las dependencias de Python
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt \
+    && pip install pytest-selenium==2.0.1
 
 # Copia el código fuente de pruebas en el contenedor
 COPY . .

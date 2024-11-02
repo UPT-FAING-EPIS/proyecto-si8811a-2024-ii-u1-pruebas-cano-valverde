@@ -1,22 +1,30 @@
-name: Publish Docker Image
+name: Build and Publish Docker Image
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out code
+      - name: Check out the repository
         uses: actions/checkout@v3
 
       - name: Log in to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}/my-image:latest .
+      - name: Build the Docker image
+        run: |
+          docker build -t ghcr.io/upt-faing-epis/proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/my-image:latest .
 
-      - name: Push Docker image to GitHub Container Registry
-        run: docker push ghcr.io/${{ github.repository }}/my-image:latest
+      - name: Push the Docker image
+        run: |
+          docker push ghcr.io/upt-faing-epis/proyecto-si8811a-2024-ii-u1-pruebas-cano-valverde/my-image:latest
